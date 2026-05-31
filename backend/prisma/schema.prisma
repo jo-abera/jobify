@@ -6,10 +6,56 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+ // output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("postgresql://postgres.evgrymvrloplfanqzxsv:@Jo_Abera369@aws-1-eu-north-1.pooler.supabase.com:6543/postgres?pgbouncer=true")
+  provider = "sqlite"
+  //url      = env("postgresql://postgres.evgrymvrloplfanqzxsv:@Jo_Abera369@aws-1-eu-north-1.pooler.supabase.com:6543/postgres?pgbouncer=true")
+}
+
+
+// Registered job seeker; may use email/password OR Google OAuth
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  password String? // null when the account is Google-only
+  googleId String? @unique
+  avatar String?
+  skills Json @default("[]")
+  location String?
+  createdAt DateTime @default(now())
+  savedJobs SavedJob[] 
+}
+
+
+// Aggregated job listing (seeded, scraped, or created via API).
+
+model Job {
+  id String @id @default(uuid())
+  title String
+  company String
+  location String
+  salary String?
+  url String @unique //  dedupe key for upserts from scraper/seed 
+  description String 
+  type String @default("Full-time")
+  source String
+  postedAt DateTime @default(now())
+  savedBy SavedJob[]
+}
+
+
+// Join table: user bookmarked a job and track pipeline status on the kanban board.
+model SavedJob {
+  id String @id @default(uuid())
+  userId String
+  jobId String
+  status String @default("saved") // saved | applied | interviewing | offered | rejected
+  savedAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id])
+  job Job @relation(fields: [jobId], references: [id])
+
+  @@unique([userId, jobId]) // prevent duplicate saves
 }
