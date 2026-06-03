@@ -7,17 +7,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Job seeker account — email/password and/or Google OAuth (Passport).
 model User {
-  id        String     @id @default(uuid())
-  name      String
-  email     String     @unique
-  password  String?
-  googleId  String?    @unique
-  avatar    String?
-  skills    Json       @default("[]")
-  location  String?
-  createdAt DateTime   @default(now())
-  savedJobs SavedJob[]
+  id                   String     @id @default(uuid())
+  name                 String
+  email                String     @unique
+  password             String     // bcrypt hash, or GOOGLE_OAUTH_NO_PASSWORD for Google-only
+  role                 String     @default("user") // "user" | "admin"
+  isBanned             Boolean    @default(false)
+  googleId             String?
+  avatar               String?
+  location             String?
+  phone                String?
+  bio                  String?
+  skills               Json       @default("[]")
+  preferredJobTypes    Json       @default("[]")
+  preferredWorkModes   Json       @default("[]")
+  salaryExpectationMin Int?
+  salaryExpectationMax Int?
+  isVerified           Boolean    @default(false)
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  passwordChangedAt    DateTime?
+  createdAt            DateTime   @default(now())
+  savedJobs            SavedJob[]
 }
 
 model Job {
@@ -29,19 +42,21 @@ model Job {
   url         String     @unique
   description String
   type        String     @default("Full-time")
-  source      String
+  source      String     @default("manual") // manual | scraper URL | company site
   postedAt    DateTime   @default(now())
   savedBy     SavedJob[]
 }
 
+// User bookmark + application pipeline status (kanban).
 model SavedJob {
   id      String   @id @default(uuid())
   userId  String
   jobId   String
   status  String   @default("saved")
+  notes   String?
   savedAt DateTime @default(now())
-  job     Job      @relation(fields: [jobId], references: [id])
-  user    User     @relation(fields: [userId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job     Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@unique([userId, jobId])
 }
