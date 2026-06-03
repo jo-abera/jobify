@@ -1,10 +1,10 @@
 /**
- * JWT authentication middleware.
+ * JWT authentication middleware (protect).
  *
- * Expects `Authorization: Bearer <token>`(attached by the frontend axios interceptor). On success, sets `req.userId` for downstream controllers.
- *
- * This middleware checks for the presence of a JWT token in the Authorization header of the incoming request. If a token is found, it verifies the token using the secret key defined in the environment variables. If the token is valid, it extracts the user ID from the token and attaches it to the request object for use in subsequent middleware or route handlers. If the token is missing or invalid, it responds with a 401 Unauthorized status and an appropriate error message.
- *
+ * Validates Bearer token, loads the user, rejects banned accounts, and
+ * invalidates tokens issued before passwordChangedAt. Sets req.user (and
+ * req.userId alias for legacy tracker code).
+ 
  * Usage:
  *
  * const authMiddleware = require('./middleware/auth.middleware');
