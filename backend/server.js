@@ -1,13 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
-//const passport = require("passport");
+const passport = require("passport");
 require("dotenv").config();
+
+require("./src/config/passport");
 
 const app = express();
 const frontendOrigin = process.env.FRONTEND_URL || "https://localhost:5173";
 
-// CORS configuration to allow requests from the frontend
+// CORS configuration to allow requests from the frontend(Cross Origin )
 app.use(
   cors({
     origin: frontendOrigin,
@@ -25,6 +27,10 @@ app.use(
     saveUninitialized: false,
   }),
 );
+
+app.use(passport.initialize);
+
+app.use("/api/auth", require("./src/routes/auth.routes"));
 
 // Test route to verify server is running
 app.get("/", (req, res) => {
