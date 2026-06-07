@@ -202,10 +202,71 @@ exports.forgotPaaword = async (req, res) => {
     }
     const user = await prisma.user.findUnique({ where: { email } });
 
-    if(!user){
-      return res.status(404).json({message: "There is no user with that email address."})
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "There is no user with that email address." });
     }
 
-    if(user.password === GOOGLE_PlACEHODER)
-  } catch (err) {}
+    if (user.password === GOOGLE_PlACEHODER) {
+      return res.status(400).json({
+        message: "This account uses Google login. Sign in with Google instead.",
+      });
+    }
+
+    // It is used to generate a reset token and hash it.
+    // Generates a 32-byte random token and converts it to a hex string — this becomes the reset link token
+    // This is the token you send to the user via email. So the user can click the link to reset their password.
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    // Hashes the token with SHA-256 before storing it in the database. So even if the DB is leaked, attackers can't use the raw token to reset passwords.
+    // This ensures the token is secure and can't be tampered with.
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    // It is used to update the user's password reset token and expiration.
+    // Stores the hashed token and sets an expiration time (10 minutes from now).
+    // This ensures the token is only valid for a short period of time.
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+      },
+    });
+
+    // It is used to generate a reset URL.
+    // Combines the frontend URL with the reset token to create a valid reset link.
+    // Builds the reset link using the unhashed token (so the user gets the raw token in their email)
+    const restURL = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+
+    if (!Email.isConfigured()) {
+      console.log("[dev] Password reset URL (email not configured):", restURL);
+      return res.status(200).json({
+        status: "success",
+        message: " Reset logged to server console (email not confi",
+      });
+    }
+    try {
+      await new Email(user, resetURL).sendPasswordReset();
+      res
+        .status(200)
+        .json({ status: "success", message: " Rest link sent to your email" });
+    } catch (emailErr) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordResetToken: null, passwordResetExpires: null },
+      });
+    }
+    res.status(500).json({
+      message: "There was an error sending the email. Please try again later.",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "something went wrong" });
+  }
 };
+
+
