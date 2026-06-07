@@ -1,75 +1,211 @@
 /**
- * Authentication Controller
+ * Authentication controller.
  *
- *
+ * Email/password register & login, password reset, update password, and
+ * Google OAuth callback (Passport). All handlers use plain try/catch.
+ * Token responses use signAndSend for a consistent { status, token, data } shape.
  */
 
-// const bcrypt = require("bcrypt");
-// const jwt = require("jsonwebtoken");
-// const { OAuth2Client } = require("google-auth-library");
-// const prisma = require("../config/db");
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const prisma = require("../config/db");
+const Email = require("../utils/email");
 
+//const { OAuth2Client } = require("google-auth-library");
 // const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// // function generateToken(user) {
-// //   return jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-// // }
+const GOOGLE_PLACEHOLDER_PASSWORD = "GOOGLE_OAUTH_NO_PASSWORD";
+const JOB_TYPES = ["Full-time", "Part-time", "Internship", "Contract"];
+const WORK_MODES = ["Remote", "On-site", "Hybrid"];
 
-// /** Builds a JWT token for the given user with expiration */
-// /** Builds JWT + safe user payload returned after any successful authentication(signin) */
-// function issueToken(user) {
-//   const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-//     expiresIn: "7d",
-//   });
-//   return {
-//     token,
-//     user: {
-//       id: user.id,
-//       name: user.name,
-//       email: user.email,
-//       avatar: user.avatar,
-//     },
-//   };
-// }
+/** Safe user fields retured to the client (never include secrets) */
+const PublicUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  avatar: true,
+  location: true,
+  phone: true,
+  bio: true,
+  skills: true,
+  preferredJobTypes: true,
+  preferredWorkModes: true,
+  salaryExpectationMin: true,
+  salaryExpectationMax: true,
+  isVerified: true,
+  createdAt: true,
+};
 
-// exports.register = async (req, res) => {
-//   try {
-//     const { name, email, password } = req.body;
+/**
+ * Signs JWT and responds with token + public user profile.
+ * Mutates user object to strip sensitive fields before serialization.
+ */
 
-//     // Basic validation input
-//     if (!name || !email || !password) {
-//       return res.status(400).json({ message: "All fields are required" });
-//     }
+// It is used to generate a token and send response after login/register.
+//
 
-//     // Password strength validation: at least 6 characters, including letters and numbers using regex
-//     const strongPassword = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+const signAndSend = (user, statusCode, res) => {
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  });
 
-//     if (!strongPassword.test(password)) {
-//       return res.status(400).json({
-//         message:
-//           "Password must contain at least 6 characters, including letters and numbers",
-//       });
-//     }
+  const safeUser = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar: user.avatar,
+    location: user.location,
+    phone: user.phone,
+    bio: user.bio,
+    skills: user.skills,
+    preferredJobTypes: user.preferredJobTypes,
+    preferredWorkModes: user.preferredWorkModes,
+    salaryExpectationMin: user.salaryExpectationMin,
+    salaryExpectationMax: user.salaryExpectationMax,
+    isVerified: user.isVerified,
+    createdAt: user.createdAt,
+  };
 
+  res.status(statusCode).json({
+    status: "success",
+    token,
+    data: { user: safeUser },
+  });
+};
 
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
-//     const existing = await prisma.user.findUnique({ where: { email } });
-//     if (existing) {
-//       // Prevent duplicate email when account was created via Google first.
-//       if (!existing.password && existing.googleId) {
-//         return res.status(400).json({
-//           message:
-//             "This email uses Google sign-in. Click Continue with Google.",
-//         });
-//       }
-//       return res.status(400).json({ message: "Email already in use." });
-//     }
-//     const hashed = await bcrypt.hash(password, 10);
-//     const user = await prisma.user.create({
-//       data: { name, email, password: hashed },
-//     });
-//     res.json(issueToken(user));
-//   } catch (error) {
-//     res.status(500).json({ message: "Registration failed." });
-//   }
-// };
+    // Basic validation inputs are required
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "Please provide name, email and password to register.",
+      });
+    }
+    // Password strength Validation: at least 6 characters, at least one letter and one number using regex
+    const strongPassword = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    if (!strongPassword.test(password)) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 6 characters long and contain at least one letter and one number.",
+      });
+    }
+
+    //  Check if the email is already in use. If it is, return an error
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res
+        .status(400)
+        .json({ message: "Email already in use. Please login instead." });
+    }
+
+    // Hash the password using Bcrypt before storing it in the database
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Create a new user in the database
+    const newUser = await prisma.user.create({
+      data: { name, email, password: hashedPassword, isVerified: true },
+    });
+
+    // Send a welcome email to the user. If the email is not configured, Log a message to the console and continue without failing the registration process
+    if (Email.isConfigured()) {
+      try {
+        const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/jobs`;
+        await new Email(newUser, url).sendWelcome();
+      } catch (emailErr) {
+        console.log("Welcome email faild:", emailErr.message);
+      }
+    }
+
+    signAndSend(newUser, 201, res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Registration faild. Please try again." });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    // 1. Check if email and password are provided
+    if (!email || !password) {
+      return res.status(400).json({
+        message: " Please provide email and password to login",
+      });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (
+      !user ||
+      !user.password ||
+      !(await bcrypt.compare(password, user.password))
+    ) {
+      return res.status(401).json({ message: "Incorrect email or password" });
+    }
+
+    if (user.password === GOOGLE_PLACEHOLDER_PASSWORD) {
+      return res.status(401).json({
+        message:
+          "This account uses Google login. Please sign in with Google or reset your password to set a new one.",
+      });
+    }
+
+    if (user.isBanned) {
+      return res.status(403).json({
+        message: "Your account has been banned",
+      });
+    }
+
+    signAndSend(user, 200, res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Login failed. Please try again." });
+  }
+};
+
+/** Client clears localStorage token; included for API symmetry. */
+exports.logout = async (req, res) => {
+  res
+    .status(200)
+    .json({ status: "success", message: "Logged out successfully" });
+};
+
+// Get the current logged in user's profile. Protected route, requires auth middleware.
+exports.getMe = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: publicUserSelect,
+    });
+    res.status(200).json({
+      status: "success",
+      data: { user },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Could not get user profile." });
+  }
+};
+
+exports.forgotPaaword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res
+        .status(400)
+        .json({ message: "Please provide your email address." });
+    }
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if(!user){
+      return res.status(404).json({message: "There is no user with that email address."})
+    }
+
+    if(user.password === GOOGLE_PlACEHODER)
+  } catch (err) {}
+};
