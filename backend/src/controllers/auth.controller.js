@@ -208,7 +208,7 @@ exports.forgotPaaword = async (req, res) => {
         .json({ message: "There is no user with that email address." });
     }
 
-    if (user.password === GOOGLE_PlACEHODER) {
+    if (user.password === GOOGLE_PlACEHODER_PASSWORD) {
       return res.status(400).json({
         message: "This account uses Google login. Sign in with Google instead.",
       });
@@ -269,4 +269,89 @@ exports.forgotPaaword = async (req, res) => {
   }
 };
 
+exports.resetPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ message: "Please provide a new password" });
+    }
 
+    // Takes the token from the URL (req.params.token), hashes it, then looks up the matching hash in the DB
+    // This is the token you get from the user's email. So you can verify it's valid and not expired.
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await prisma.user.findFirst({
+      where: {
+        // Looks for the hashed token in the DB.
+        passwordResetToken: hashedToken,
+        // greater than refers to the hashed token expiration time is in the future.
+        passwordResetExpires: { gt: new Date() },
+      },
+    });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Token is invalid or has expired" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        passwordChangedAt: new Date(),
+      },
+    });
+
+    signAndSend(updated, 200, res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Password reset failed" });
+  }
+};
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const { passwordCurrent, password } = req.body;
+
+    if (!passwordCurrent || !password) {
+      return res
+        .status(400)
+        .json({ message: "Please provide current and new password" });
+    }
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (user.password === GOOGLE_PLACEHOLDER_PASSWORD) {
+      return res.status(400).json({
+        message:
+          "Google accounts cannot change password here. use Google sign-in",
+      });
+    }
+    // Before changing password, verifies the current password is correct — prevents someone who grabbed an unlocked screen from changing the password
+    // Compares the submitted current password (passwordCurrent) against the stored user password (user.password)
+    if (!(await bcrypt.compare(passwordCurrent, user.password))) {
+      return res
+        .status(401)
+        .json({ message: "Your current password is wrong" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordChangedAt: new Date(),
+      },
+    });
+
+    signAndSend(updated, 200, res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Password update failed." });
+  }
+};
