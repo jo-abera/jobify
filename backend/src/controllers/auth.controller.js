@@ -168,6 +168,28 @@ exports.login = async (req, res) => {
   }
 };
 
+/**
+ * Passport success handler — issues JWT and redirects to frontend /auth/callback.
+ * req.user is set by passport.authenticate in auth.routes.
+ */
+exports.googleCallback = (req, res) => {
+  try {
+    const frontend = process.env.FRONTEND_URL || "http://localhost:5173";
+
+    if (req.user?.isBanned) {
+      return res.redirect(`${frontend}/login?error=banned`);
+    }
+
+    const token = jwt.sign({ userId: req.user.id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    });
+    res.redirect(`${frontend}/auth/callback?token=${token}`);
+  } catch (err) {
+    const frontend = process.env.FRONTEND_URL || "http://localhost:5173";
+    res.redirect(`${frontend}/login?error=google_failed`);
+  }
+};
+
 /** Client clears localStorage token; included for API symmetry. */
 exports.logout = async (req, res) => {
   res
@@ -262,7 +284,8 @@ exports.forgotPassword = async (req, res) => {
         data: { passwordResetToken: null, passwordResetExpires: null },
       });
       return res.status(500).json({
-        message: "There was an error sending the email. Please try again later.",
+        message:
+          "There was an error sending the email. Please try again later.",
       });
     }
   } catch (err) {
