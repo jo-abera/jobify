@@ -20,7 +20,7 @@ router.post("/login", authController.login);
 router.post("/logout", protect, authController.logout);
 router.get("/me", protect, authController.getMe);
 router.post("/forgot-password", authController.forgotPassword);
-router.patch("reset-password/:token", authController.resetPassword);
+router.patch("/reset-password/:token", authController.resetPassword);
 router.patch("/update-password", protect, authController.updatePassword);
 
 module.exports = router;

@@ -78,7 +78,7 @@ const signAndSend = (user, statusCode, res) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body || {};
 
     // Basic validation inputs are required
     if (!name || !email || !password) {
@@ -180,7 +180,7 @@ exports.getMe = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: publicUserSelect,
+      select: PublicUserSelect,
     });
     res.status(200).json({
       status: "success",
@@ -192,7 +192,7 @@ exports.getMe = async (req, res) => {
   }
 };
 
-exports.forgotPaaword = async (req, res) => {
+exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -208,7 +208,7 @@ exports.forgotPaaword = async (req, res) => {
         .json({ message: "There is no user with that email address." });
     }
 
-    if (user.password === GOOGLE_PlACEHODER_PASSWORD) {
+    if (user.password === GOOGLE_PLACEHOLDER_PASSWORD) {
       return res.status(400).json({
         message: "This account uses Google login. Sign in with Google instead.",
       });
@@ -239,14 +239,13 @@ exports.forgotPaaword = async (req, res) => {
 
     // It is used to generate a reset URL.
     // Combines the frontend URL with the reset token to create a valid reset link.
-    // Builds the reset link using the unhashed token (so the user gets the raw token in their email)
-    const restURL = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+    const resetURL = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
 
     if (!Email.isConfigured()) {
-      console.log("[dev] Password reset URL (email not configured):", restURL);
+      console.log("[dev] Password reset URL (email not configured):", resetURL);
       return res.status(200).json({
         status: "success",
-        message: " Reset logged to server console (email not confi",
+        message: " Reset logged to server console (email not configured)",
       });
     }
     try {

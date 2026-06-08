@@ -29,10 +29,10 @@ module.exports = async (req, res, next) => {
         message: "You are not logged in. Please login to get access.",
       });
     }
-    // Step 3 - verfy token is valid
-    const decoded = jwt.verfiy(token, process.env.JWT_SECRET);
+    // Step 3 - verify token is valid
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Step 4 - if token is invalid, throw error--added by me
+    // Step 4 - if token is invalid, throw error --- added by Jo
     if (!decoded) {
       return res.status(401).json({
         message: "Invalid token. Please log in again.",
@@ -76,6 +76,6 @@ module.exports = async (req, res, next) => {
     next();
   } catch (err) {
     // Step 11 - if token is invalid or expired, block access
-    return res.staus(401).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };

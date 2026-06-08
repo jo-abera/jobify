@@ -18,6 +18,8 @@ app.use(
 );
 
 app.use(express.json());
+// Parse URL-encoded form data (from HTML forms) and make it available in req.body
+app.use(express.urlencoded({ extended: true }));
 
 // sessions (keeping users logged in)
 app.use(
@@ -28,7 +30,7 @@ app.use(
   }),
 );
 
-app.use(passport.initialize);
+app.use(passport.initialize());
 
 app.use("/api/auth", require("./src/routes/auth.routes"));
 
