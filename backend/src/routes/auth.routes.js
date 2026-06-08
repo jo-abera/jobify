@@ -23,4 +23,29 @@ router.post("/forgot-password", authController.forgotPassword);
 router.patch("/reset-password/:token", authController.resetPassword);
 router.patch("/update-password", protect, authController.updatePassword);
 
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  router.get(
+    "/google",
+    passport.authenticate("google", {
+      scope: ["profile", "email"],
+      session: false,
+    }),
+  );
+
+  router.get(
+    "/google/callback",
+    passport.authenticate("google", {
+      session: false,
+      failureRedirect: `${frontend}/login?error=google_failed`,
+    }),
+    authController.googleCallback,
+  );
+} else {
+  router.get("/google", (req, res) => {
+    res
+      .status(503)
+      .json({ message: "Google sign-in is not configured on the server" });
+  });
+}
+
 module.exports = router;
