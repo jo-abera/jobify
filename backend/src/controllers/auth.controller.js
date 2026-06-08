@@ -245,23 +245,26 @@ exports.forgotPassword = async (req, res) => {
       console.log("[dev] Password reset URL (email not configured):", resetURL);
       return res.status(200).json({
         status: "success",
-        message: " Reset logged to server console (email not configured)",
+        message: "Reset logged to server console (email not configured)",
       });
     }
+
     try {
       await new Email(user, resetURL).sendPasswordReset();
-      res
-        .status(200)
-        .json({ status: "success", message: " Rest link sent to your email" });
+      return res.status(200).json({
+        status: "success",
+        message: "Password reset link sent to your email",
+      });
     } catch (emailErr) {
+      console.error("Email send error:", emailErr);
       await prisma.user.update({
         where: { id: user.id },
         data: { passwordResetToken: null, passwordResetExpires: null },
       });
+      return res.status(500).json({
+        message: "There was an error sending the email. Please try again later.",
+      });
     }
-    res.status(500).json({
-      message: "There was an error sending the email. Please try again later.",
-    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "something went wrong" });
