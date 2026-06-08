@@ -496,8 +496,7 @@ exports.updatePreferences = async (req, res) => {
 
     if (
       (min !== null && Number.isNaN(min)) ||
-      max !== null ||
-      Number.isNaN(max)
+      (max !== null && Number.isNaN(max))
     ) {
       return res
         .status(400)
