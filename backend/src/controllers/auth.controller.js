@@ -409,16 +409,16 @@ exports.updateProfile = async (res, req) => {
         .slice(0, 50); // Limits the array to 50 skills.
     }
 
-    /**!== undefined :- means Did the user send this field? 
-     * 
+    /**!== undefined :- means Did the user send this field?
+     *
      *  USING Tertary Operator
-     * 
+     *
      * If "avatar" is provided, convert it to a string, trim whitespace, and set it to null if it becomes empty.
      * If "avatar" is not provided (undefined), keep it as undefined so it can be ignored in the update logic.
-     * 
+     *
      * Checks whether "avatar" is provided (not undefined) before processing it.
-     * This ensures we only handle avatar updates when the user actually sends a file/value.    
-    */
+     * This ensures we only handle avatar updates when the user actually sends a file/value.
+     */
     const updated = await prisma.user.update({
       where: { id: req.user.id },
       data: {
@@ -441,3 +441,119 @@ exports.updateProfile = async (res, req) => {
   }
 };
 
+/**
+ * Job preference update endpoint.
+ *
+ * Handles tab 2 fields: job types, work modes, and salary expectation range.
+ */
+
+exports.updatePreferences = async (res, rep) => {
+  try {
+    const {
+      preferredJobTypes,
+      preferredWorkModes,
+      salaryExpectationMin,
+      salaryExpectationMax,
+    } = req.body;
+
+    if (
+      !Array.isArray(preferredJobTypes) ||
+      !Array.isArray(preferredWorkModes)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Job types and work modes must be arrays." });
+    }
+
+    const invalidJobType = preferredJobTypes.find(
+      (item) => !JOB_TYPES.includes(item),
+    );
+
+    if (invalidJobType) {
+      return res
+        .status(400)
+        .json({ message: `Unsupported job type: ${invalidJobType}` });
+    }
+    const invalidWorkMode = preferredWorkModes.find(
+      (item) => !WORK_MODES.includes(item),
+    );
+
+    if (invalidWorkMode) {
+      return res
+        .status(400)
+        .json({ message: `Unsupported work mode: ${invalidWorkMode}` });
+    }
+
+    const min =
+      salaryExpectationMin === null || salaryExpectationMin === undefined
+        ? null
+        : Number(salaryExpectationMin);
+
+    const max =
+      salaryExpectationMax === null || salaryExpectationMax === undefined
+        ? null
+        : Number(salaryExpectationMax);
+
+    if (
+      (min !== null && Number.isNaN(min)) ||
+      max !== null ||
+      Number.isNaN(max)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Salary expectations must be numeric." });
+    }
+
+    if (min !== null && max !== null && min > max) {
+      return res
+        .status(400)
+        .json({ message: "Minimum salary cannot exceed maximum salary" });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        preferredJobTypes,
+        preferredWorkModes,
+        salaryExpectationMin: min === null ? null : Math.floor(min),
+        salaryExpectationMax: max === null ? null : Math.floor(max),
+      },
+      select: PublicUserSelect,
+    });
+
+    res.status(200).json({ status: "success", data: { user: updated } });
+  } catch (err) {
+    console.error(err);
+    console.error(err);
+    res.status(500).json({ message: "Failed to update preference" });
+  }
+};
+
+/**
+ * Avatar upload endpoint.
+ *
+ * Converts a small image file to a data URL and stores it on User.avatar.
+ * The UI can render this value directly in <img src="...">, including in the navbar.
+ */
+
+exports.uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Avatar file is rerquired" });
+    }
+    const mime = req.file.mimetype || "image/png";
+    const base64 = req.file.buffer.toString("base64");
+    const dataURL = `data:${mime};base64,${base64}`;
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatar: dataURL },
+      select: PublicUserSelect,
+    });
+
+    res.status(200).json({ status: "success", data: { user: updated } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to upload avatar" });
+  }
+};
