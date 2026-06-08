@@ -380,3 +380,64 @@ exports.updatePassword = async (req, res) => {
     res.status(500).json({ message: "Password update failed." });
   }
 };
+
+/**
+ * Carrer profile update endpoint.
+ *
+ * Handles tab 1 fields: avatar, name, contact info, bio and skill tags.
+ * Keeps shape strict so frontend state stays pridctable.
+ *
+ */
+
+exports.updateProfile = async (res, req) => {
+  try {
+    const { avatar, name, location, phone, bio, skills } = req.body;
+
+    let normalizedSkills = undefined;
+
+    if (skills !== undefined) {
+      // Validation: Ensure "skills" is an array of strings.
+      // Rejects invalid input such as non-array values.
+      if (!Array.isArray(skills)) {
+        return res
+          .status(400)
+          .json({ message: "Skills must be an array of strings." });
+      }
+      normalizedSkills = skills
+        .map((skill) => String(skill).trim()) // Converts each skill to a string and trims whitespace.
+        .filter(Boolean) //removes falsy values (empty strings, null, etc.)
+        .slice(0, 50); // Limits the array to 50 skills.
+    }
+
+    /**!== undefined :- means Did the user send this field? 
+     * 
+     *  USING Tertary Operator
+     * 
+     * If "avatar" is provided, convert it to a string, trim whitespace, and set it to null if it becomes empty.
+     * If "avatar" is not provided (undefined), keep it as undefined so it can be ignored in the update logic.
+     * 
+     * Checks whether "avatar" is provided (not undefined) before processing it.
+     * This ensures we only handle avatar updates when the user actually sends a file/value.    
+    */
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        avatar:
+          avatar !== undefined ? String(avatar).trim() || null : undefined,
+        name: name !== undefined ? String(name).trim() : undefined,
+        location:
+          location !== undefined ? String(location).trim() || null : undefined,
+        phone: phone !== undefined ? String(phone).trim() || null : undefined,
+        bio: bio !== undefined ? String(bio).trim() || null : undefined,
+        skills: normalizedSkills !== undefined ? normalizedSkills : undefined,
+      },
+
+      select: PublicUserSelect,
+    });
+    res.status(200).json({ status: "success", data: { user: updated } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update profile" });
+  }
+};
+
