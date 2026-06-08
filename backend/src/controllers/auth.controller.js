@@ -389,7 +389,7 @@ exports.updatePassword = async (req, res) => {
  *
  */
 
-exports.updateProfile = async (res, req) => {
+exports.updateProfile = async (req, res) => {
   try {
     const { avatar, name, location, phone, bio, skills } = req.body;
 
@@ -447,7 +447,7 @@ exports.updateProfile = async (res, req) => {
  * Handles tab 2 fields: job types, work modes, and salary expectation range.
  */
 
-exports.updatePreferences = async (res, rep) => {
+exports.updatePreferences = async (req, res) => {
   try {
     const {
       preferredJobTypes,
@@ -555,5 +555,24 @@ exports.uploadAvatar = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to upload avatar" });
+  }
+};
+
+/**
+ * Account deletion endpoint.
+ *
+ * Removes user-owned tracker entries first, then deletes the user account.
+ */
+
+exports.deleteAccount = async (req, res) => {
+  try {
+    await prisma.savedJob.deleteMany({ where: { userId: req.user.id } });
+    await prisma.user.delete({ where: { id: req.user.id } });
+    res
+      .status(200)
+      .json({ status: "success", message: "Account deleted successfuly" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete account" });
   }
 };

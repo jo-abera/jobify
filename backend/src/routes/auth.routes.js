@@ -10,7 +10,7 @@ const passport = require("passport");
 require("../config/passport");
 const authController = require("../controllers/auth.controller");
 const protect = require("../middleware/auth.middleware");
-//const { handleAvatarUpload } = require("../middleware/avatarUpload.middleware");
+const { handleAvatarUpload } = require("../middleware/avatarUpload.middleware");
 
 const router = express.Router();
 const frontend = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -22,6 +22,15 @@ router.get("/me", protect, authController.getMe);
 router.post("/forgot-password", authController.forgotPassword);
 router.patch("/reset-password/:token", authController.resetPassword);
 router.patch("/update-password", protect, authController.updatePassword);
+router.patch("/profile", protect, authController.updateProfile);
+router.patch("/preferences", protect, authController.updatePreferences);
+router.post(
+  "/avatar",
+  protect,
+  handleAvatarUpload,
+  authController.uploadAvatar,
+);
+router.delete("/delete-account", protect, authController.deleteAccount);
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   router.get(

@@ -18,7 +18,7 @@ app.use(
 );
 
 app.use(express.json());
-// Parse URL-encoded form data (from HTML forms) and make it available in req.body
+// Parse URL-encoded form data (from HTML forms) and make it available in req.body--Added by Jo
 app.use(express.urlencoded({ extended: true }));
 
 // sessions (keeping users logged in)
