@@ -10,7 +10,7 @@
 
 const multer = require("multer");
 
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 mb
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024 *1024; // 10 mb
 
 const storage = multer.memoryStorage();
 
