@@ -11,7 +11,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const prisma = require("../config/db");
 const Email = require("../utils/email");
-const cloudinary = require('../utils/cloudinary')
+const cloudinary = require("../utils/cloudinary");
 
 //const { OAuth2Client } = require("google-auth-library");
 // const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -109,7 +109,15 @@ exports.register = async (req, res) => {
 
     // Create a new user in the database
     const newUser = await prisma.user.create({
-      data: { name, email, password: hashedPassword, isVerified: true },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        isVerified: true,
+        // skills: [],
+        // preferredJobTypes: [],
+        // preferredWorkModes: [],
+      },
     });
 
     // Send a welcome email to the user. If the email is not configured, Log a message to the console and continue without failing the registration process
@@ -551,17 +559,18 @@ exports.uploadAvatar = async (req, res) => {
     // const base64 = req.file.buffer.toString("base64");
     // const dataURL = `data:${mime};base64,${base64}`;
 
-  let avatarUrl
+    let avatarUrl;
 
     if (cloudinary.isConfigured()) {
-      avatarUrl = await cloudinary.uploadAvatar(req.file.buffer, req.user.id)
+      avatarUrl = await cloudinary.uploadAvatar(req.file.buffer, req.user.id);
     } else {
-      console.warn('[avatar] Cloudinary not configured — storing data URL (demo only)')
-      const mime = req.file.mimetype || 'image/png'
-      const base64 = req.file.buffer.toString('base64')
-      avatarUrl = `data:${mime};base64,${base64}`
+      console.warn(
+        "[avatar] Cloudinary not configured — storing data URL (demo only)",
+      );
+      const mime = req.file.mimetype || "image/png";
+      const base64 = req.file.buffer.toString("base64");
+      avatarUrl = `data:${mime};base64,${base64}`;
     }
-
 
     const updated = await prisma.user.update({
       where: { id: req.user.id },
@@ -572,8 +581,16 @@ exports.uploadAvatar = async (req, res) => {
 
     res.status(200).json({ status: "success", data: { user: updated } });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to upload avatar" });
+    // console.error(err);
+    // res.status(500).json({ message: "Failed to upload avatar" });
+
+    console.error("[avatar upload]", err);
+    const detail =
+      process.env.NODE_ENV === "development" ? err.message : undefined;
+    res.status(500).json({
+      message: "Failed to upload avatar.",
+      ...(detail && { detail }),
+    });
   }
 };
 

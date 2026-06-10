@@ -13,7 +13,7 @@
 
 const multer = require("multer");
 
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024 * 1024; // 10 mb
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 mb
 
 const storage = multer.memoryStorage();
 
@@ -29,7 +29,7 @@ const upload = multer({
   },
 });
 
-const uploadAvatar = upload.single("Avatar");
+const uploadAvatar = upload.single("avatar");
 
 /**
  * Wraps Multer errors into JSON responses.
