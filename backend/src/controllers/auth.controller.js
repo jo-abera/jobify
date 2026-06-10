@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const prisma = require("../config/db");
 const Email = require("../utils/email");
+const cloudinary = require('../utils/cloudinary')
 
 //const { OAuth2Client } = require("google-auth-library");
 // const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -533,20 +534,39 @@ exports.updatePreferences = async (req, res) => {
  *
  * Converts a small image file to a data URL and stores it on User.avatar.
  * The UI can render this value directly in <img src="...">, including in the navbar.
+ * *****************************************************************************
+ * Prefers Cloudinary (short CDN URL in User.avatar). Falls back to a data URL
+ * when CLOUDINARY_* env vars are unset — local demo only, not for production.
  */
 
 exports.uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "Avatar file is rerquired" });
+      return res.status(400).json({ message: "Avatar file is required" });
     }
-    const mime = req.file.mimetype || "image/png";
-    const base64 = req.file.buffer.toString("base64");
-    const dataURL = `data:${mime};base64,${base64}`;
+
+    /**Used for converting images to base 64 which not recommended for database due to its large string */
+
+    // const mime = req.file.mimetype || "image/png";
+    // const base64 = req.file.buffer.toString("base64");
+    // const dataURL = `data:${mime};base64,${base64}`;
+
+  let avatarUrl
+
+    if (cloudinary.isConfigured()) {
+      avatarUrl = await cloudinary.uploadAvatar(req.file.buffer, req.user.id)
+    } else {
+      console.warn('[avatar] Cloudinary not configured — storing data URL (demo only)')
+      const mime = req.file.mimetype || 'image/png'
+      const base64 = req.file.buffer.toString('base64')
+      avatarUrl = `data:${mime};base64,${base64}`
+    }
+
 
     const updated = await prisma.user.update({
       where: { id: req.user.id },
-      data: { avatar: dataURL },
+      //data: { avatar: dataURL },
+      data: { avatar: avatarUrl },
       select: PublicUserSelect,
     });
 

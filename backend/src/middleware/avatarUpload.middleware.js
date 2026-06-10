@@ -8,9 +8,12 @@
  * object storage (S3/Supabase) or a static file host. Works well for small avatars.
  */
 
+/** Multer reads the file into memory; the controller uploads to Cloudinary
+ * (or falls back to a data URL when Cloudinary env vars are unset). */
+
 const multer = require("multer");
 
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024 *1024; // 10 mb
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024 * 1024; // 10 mb
 
 const storage = multer.memoryStorage();
 
