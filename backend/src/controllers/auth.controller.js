@@ -581,16 +581,16 @@ exports.uploadAvatar = async (req, res) => {
 
     res.status(200).json({ status: "success", data: { user: updated } });
   } catch (err) {
-    // console.error(err);
-    // res.status(500).json({ message: "Failed to upload avatar" });
+    console.error(err);
+    res.status(500).json({ message: "Failed to upload avatar" });
 
-    console.error("[avatar upload]", err);
-    const detail =
-      process.env.NODE_ENV === "development" ? err.message : undefined;
-    res.status(500).json({
-      message: "Failed to upload avatar.",
-      ...(detail && { detail }),
-    });
+    // console.error("[avatar upload]", err);
+    // const detail =
+    //   process.env.NODE_ENV === "development" ? err.message : undefined;
+    // res.status(500).json({
+    //   message: "Failed to upload avatar.",
+    //   ...(detail && { detail }),
+    // });
   }
 };
 
