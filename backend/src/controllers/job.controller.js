@@ -63,3 +63,15 @@ exports.createJob = async (req, res) => {
     res.status(500).json({ message: "Failed to create job" });
   }
 };
+
+exports.updateJob = async (req, res) => {
+  try {
+    const job = await prisma.job.update({
+      where: { id: req.params.id },
+      data: req.body,
+    });
+    res.status(200).json(job);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update job" });
+  }
+};
