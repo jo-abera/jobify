@@ -33,6 +33,12 @@ app.use(
 app.use(passport.initialize());
 
 app.use("/api/auth", require("./src/routes/auth.routes"));
+app.use("/api/jobs", require("./src/routes/job.routes"));
+
+
+
+
+
 
 // Test route to verify server is running
 app.get("/", (req, res) => {

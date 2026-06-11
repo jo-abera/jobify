@@ -12,7 +12,7 @@ const restrictTo = require("../middleware/restrict.middleware");
 
 router.get("/stats", jobController.getStats);
 router.get("/", jobController.getAllJobs);
-router.get("/:id:", jobController.getJobById);
+router.get("/:id", jobController.getJobById);
 
 router.post("/", protect, restrictTo("admin"), jobController.createJob);
 router.patch("/:id", protect, restrictTo("admin"), jobController.updateJob);
