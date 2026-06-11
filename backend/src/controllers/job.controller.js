@@ -75,3 +75,16 @@ exports.updateJob = async (req, res) => {
     res.status(500).json({ message: "Failed to update job" });
   }
 };
+
+exports.deleteJob = async (req, res) => {
+  try {
+    await prisma.savedJob.deleteMany({
+      where: { jobId: req.params.id },
+    });
+    await prisma.job.delete({ where: { id: req.params.id } });
+    res.json({ message: "Job deleted successfully" });
+  } catch (err) {
+    console.error(err); // developer log
+    res.status(500).json({ message: "Failed to delete job" });
+  }
+};
