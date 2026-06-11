@@ -88,3 +88,27 @@ exports.deleteJob = async (req, res) => {
     res.status(500).json({ message: "Failed to delete job" });
   }
 };
+
+
+
+/** Public aggregate stats for the marketing Home page. */
+
+exports.getStats = async(req, res)=>{
+    try{
+    const [totalJobs, companies] =  await Promise.all([
+        prisma.job.count(),
+        prisma.job.findMany({select: {company: true}, distinct:['company']})
+    ])
+    const userCount = await prisma.user.count()
+    res.json({
+        totalJobs,
+        companiesTracked: companies.length,
+        jobSeekers: userCount
+
+    })
+
+    }catch(err){
+        res.status(500).json({message: 'Failed to fetch stats'})
+
+    }
+}
