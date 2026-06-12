@@ -56,3 +56,16 @@ exports.updateStatus = async (req, res) => {
     res.status(500).json({ message: "Failed to update status" });
   }
 };
+
+exports.removeJob = async (req, res) => {
+  try {
+    const saved = await prisma.savedJob.findFirst({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!saved) return res.status(404).json({ message: "Not found" });
+    await prisma.savedJob.delete({ where: { id: req.params.id } });
+    res.json({ message: "Removed successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to remove job" });
+  }
+};
