@@ -67,3 +67,12 @@ const usersPerDay = await Promise.all(
     };
   }),
 );
+
+const topJobs = await prisma.savedJob.groupBy({
+  by: ["jobId"],
+  _count: { jobId: true },
+  orderBy: { _count: { jobId: "desc" } },
+  take: 5,
+});
+
+
