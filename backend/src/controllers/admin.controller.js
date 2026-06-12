@@ -35,8 +35,7 @@ exports.getStats = async (req, res) => {
       by: ["status"],
       _count: { status: true },
     });
-  } catch (err) {}
-};
+  
 
 const dayRanges = last7DayRanges();
 
@@ -75,4 +74,36 @@ const topJobs = await prisma.savedJob.groupBy({
   take: 5,
 });
 
+const topJobsWithDetails = await Promise.all(
+  topJobs.map(async (item) => {
+    const job = await prisma.job.findUnique({
+      where: { job: item.jobId },
+      select: { title: true, company: true },
+    });
+    return {
+      lable: job ? `${job.title} @ ${job.company}` : "Unknown",
+      count: item._count.jobId,
+    };
+  }),
+);
 
+const recentJobs = await prisma.job.count({
+    where:{
+    postedAt: {gte: new Date(Date.now() - 7*24*60*1000)}
+    }
+})
+
+res.json({
+    totalJobs,
+    totalUsers,
+    totalApplications,
+    bannedUsers,
+    recentJobs,
+    applicationsByStatus,
+    jobsPerDay,
+    usersPerDay,
+    topJobs: topJobsWithDetails
+})
+
+} catch (err) {}
+};
