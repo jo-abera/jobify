@@ -221,3 +221,17 @@ exports.banUser = async (req, res) => {
     res.status(500).json({ message: "Falied to ban user" });
   }
 };
+
+exports.unbanUser = async (req, res) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { isBanned: false },
+    });
+    res.json({ message: `User ${user.name} has been unbanned` });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to unban user" });
+  }
+};
+
+
