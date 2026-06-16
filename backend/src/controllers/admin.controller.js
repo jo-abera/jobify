@@ -127,7 +127,8 @@ exports.getAllJobs = async (req, res) => {
 
 exports.createJob = async (req, res) => {
   try {
-    const { title, company, location,  salary, url, description, type } = req.body;
+    const { title, company, location, salary, url, description, type } =
+      req.body;
     if (!title || !company || !location || !url || !description) {
       return res
         .status(400)
@@ -156,7 +157,6 @@ exports.createJob = async (req, res) => {
     res.status(500).json({ message: "Failed to create job" });
   }
 };
-
 
 /** NEEDS TO BE UPDATED DUETO SECURIT ISSUES IN THE CODE */
 exports.updateJob = async (req, res) => {

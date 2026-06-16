@@ -1,3 +1,10 @@
+/**
+ * Jobify API entry point.
+ *
+ * Express + session (for Passport OAuth handshake) + JWT for API routes.
+ * CORS is limited to FRONTEND_URL when set.
+ */
+
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
@@ -35,6 +42,7 @@ app.use(passport.initialize());
 app.use("/api/auth", require("./src/routes/auth.routes"));
 app.use("/api/jobs", require("./src/routes/job.routes"));
 app.use("/api/tracker", require("./src/routes/tracker.routes"));
+app.use("/api/admin", require("./src/routes/admin.routes"));
 
 // Test route to verify server is running
 app.get("/", (req, res) => {
