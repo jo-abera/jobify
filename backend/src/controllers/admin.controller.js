@@ -234,4 +234,16 @@ exports.unbanUser = async (req, res) => {
   }
 };
 
+exports.deleteUser = async (req, res) => {
+  try {
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ message: "You cannot delete yourself" });
+    }
+    await prisma.savedJob.deleteMany({ where: { userId: req.params.id } });
+    await prisma.user.delete({ where: { id: req.params.id } });
 
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete user" });
+  }
+};
