@@ -205,3 +205,19 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: "failed to fetch users" });
   }
 };
+
+exports.banUser = async (req, res) => {
+  try {
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ message: "You cannot ban yourself" });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { isBanned: true },
+    });
+    res.json({ message: `User ${user.name} has been banned` });
+  } catch (err) {
+    res.status(500).json({ message: "Falied to ban user" });
+  }
+};
