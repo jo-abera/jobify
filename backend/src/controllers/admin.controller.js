@@ -127,7 +127,7 @@ exports.getAllJobs = async (req, res) => {
 
 exports.createJob = async (req, res) => {
   try {
-    const { title, company, salary, url, description, type } = req.body;
+    const { title, company, location,  salary, url, description, type } = req.body;
     if (!title || !company || !location || !url || !description) {
       return res
         .status(400)
@@ -157,10 +157,14 @@ exports.createJob = async (req, res) => {
   }
 };
 
+
+/** NEEDS TO BE UPDATED DUETO SECURIT ISSUES IN THE CODE */
 exports.updateJob = async (req, res) => {
   try {
     const job = await prisma.job.update({
       where: { id: req.params.id },
+
+      /**The "data: req.body" is not good for security please review it */
       data: req.body,
     });
 
@@ -262,7 +266,7 @@ exports.promoteUser = async (req, res) => {
 
 /** Fire-and-forget scraper -- responds immidiatly while scrape runs in background */
 
-exports.runScraper = async (res, res) => {
+exports.runScraper = async (req, res) => {
   try {
     scrapeJobs()
       .then(() => console.log("Manual scrape completed"))
