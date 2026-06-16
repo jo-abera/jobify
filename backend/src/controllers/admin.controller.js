@@ -166,6 +166,18 @@ exports.updateJob = async (req, res) => {
 
     res.json(job);
   } catch (err) {
-    res.status(500).json({message: 'Failed to update job'})
+    res.status(500).json({ message: "Failed to update job" });
+  }
+};
+
+/** Removes tracker row first, then the job record */
+
+exports.deleteJob = async (req, res) => {
+  try {
+    await prisma.savedJob.deleteMany({ where: { jobId: req.params.id } });
+    await prisma.job.delete({ where: { id: req.params.id } });
+    res.json({ message: "job deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete job" });
   }
 };
