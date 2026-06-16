@@ -35,75 +35,92 @@ exports.getStats = async (req, res) => {
       by: ["status"],
       _count: { status: true },
     });
-  
 
-const dayRanges = last7DayRanges();
+    const dayRanges = last7DayRanges();
 
-const jobsPerDay = await Promise.all(
-  dayRanges.map(async (date) => {
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-    const count = await prisma.job.count({
-      where: { postedAt: { gte: date, lt: nextDay } },
+    const jobsPerDay = await Promise.all(
+      dayRanges.map(async (date) => {
+        const nextDay = new Date(date);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const count = await prisma.job.count({
+          where: { postedAt: { gte: date, lt: nextDay } },
+        });
+        return {
+          date: date.toLocaleDateString("en-US", { weekday: "short" }),
+          count,
+        };
+      }),
+    );
+
+    const usersPerDay = await Promise.all(
+      dayRanges.map(async (date) => {
+        const nextDay = new Date(date);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const count = await prisma.user.count({
+          where: { createdAt: { gte: date, lt: nextDay } },
+        });
+        return {
+          date: date.toLocaleDateString("en-US", { weekday: "short" }),
+          count,
+        };
+      }),
+    );
+
+    const topJobs = await prisma.savedJob.groupBy({
+      by: ["jobId"],
+      _count: { jobId: true },
+      orderBy: { _count: { jobId: "desc" } },
+      take: 5,
     });
-    return {
-      date: date.toLocaleDateString("en-US", { weekday: "short" }),
-      count,
-    };
-  }),
-);
 
-const usersPerDay = await Promise.all(
-  dayRanges.map(async (date) => {
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-    const count = await prisma.user.count({
-      where: { createdAt: { gte: date, lt: nextDay } },
+    const topJobsWithDetails = await Promise.all(
+      topJobs.map(async (item) => {
+        const job = await prisma.job.findUnique({
+          where: { id: item.jobId },
+          select: { title: true, company: true },
+        });
+        return {
+          label: job ? `${job.title} @ ${job.company}` : "Unknown",
+          count: item._count.jobId,
+        };
+      }),
+    );
+
+    const recentJobs = await prisma.job.count({
+      where: {
+        postedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      },
     });
-    return {
-      date: date.toLocaleDateString("en-US", { weekday: "short" }),
-      count,
-    };
-  }),
-);
 
-const topJobs = await prisma.savedJob.groupBy({
-  by: ["jobId"],
-  _count: { jobId: true },
-  orderBy: { _count: { jobId: "desc" } },
-  take: 5,
-});
-
-const topJobsWithDetails = await Promise.all(
-  topJobs.map(async (item) => {
-    const job = await prisma.job.findUnique({
-      where: { job: item.jobId },
-      select: { title: true, company: true },
+    res.json({
+      totalJobs,
+      totalUsers,
+      totalApplications,
+      bannedUsers,
+      recentJobs,
+      applicationsByStatus,
+      jobsPerDay,
+      usersPerDay,
+      topJobs: topJobsWithDetails,
     });
-    return {
-      lable: job ? `${job.title} @ ${job.company}` : "Unknown",
-      count: item._count.jobId,
-    };
-  }),
-);
-
-const recentJobs = await prisma.job.count({
-    where:{
-    postedAt: {gte: new Date(Date.now() - 7*24*60*1000)}
-    }
-})
-
-res.json({
-    totalJobs,
-    totalUsers,
-    totalApplications,
-    bannedUsers,
-    recentJobs,
-    applicationsByStatus,
-    jobsPerDay,
-    usersPerDay,
-    topJobs: topJobsWithDetails
-})
-
-} catch (err) {}
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
 };
+
+/** All jobs with save counts -- used on admin Jobs tab */
+
+exports.getAllJobs = async (req, res) => {
+  try {
+    const jobs = await prisma.job.findMany({
+      orderBy: { postedAt: "desc" },
+      include: { _count: { select: { savedBy: true } } },
+    });
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch jobs" });
+  }
+};
+
+
