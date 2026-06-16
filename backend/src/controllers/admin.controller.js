@@ -259,3 +259,19 @@ exports.promoteUser = async (req, res) => {
     res.status(500).json({ message: "Failed to promote user" });
   }
 };
+
+/** Fire-and-forget scraper -- responds immidiatly while scrape runs in background */
+
+exports.runScraper = async (res, res) => {
+  try {
+    scrapeJobs()
+      .then(() => console.log("Manual scrape completed"))
+      .catch((err) => console.error("Manual scrape failed:", err.message));
+
+    res.json({
+      message: "Scraper started. Check back in a few minutes for new jobs",
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to start scraper" });
+  }
+};
