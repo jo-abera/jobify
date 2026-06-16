@@ -123,4 +123,38 @@ exports.getAllJobs = async (req, res) => {
   }
 };
 
+/** Manual job creation (source defaults to manual) */
+
+exports.createJob = async (req, res) => {
+  try {
+    const { title, company, salary, url, description, type } = req.body;
+    if (!title || !company || !location || !url || !description) {
+      return res
+        .status(400)
+        .json({ message: "Please provide all required fields" });
+    }
+    const job = await prisma.job.create({
+      data: {
+        title,
+        company,
+        location,
+        salary,
+        url,
+        description,
+        type: type || "Full-time",
+        source: "manual",
+      },
+    });
+    res.status(201).json(job);
+  } catch (err) {
+    if (err.code === "P2002") {
+      return res
+        .status(400)
+        .json({ message: "A job with this URL already exists" });
+    }
+
+    res.status(500).json({ message: "Failed to create job" });
+  }
+};
+
 
