@@ -247,3 +247,15 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: "Failed to delete user" });
   }
 };
+
+exports.promoteUser = async (req, res) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { role: "admin" },
+    });
+    res.json({ message: `${user.name} is now an admin` });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to promote user" });
+  }
+};
