@@ -181,3 +181,27 @@ exports.deleteJob = async (req, res) => {
     res.status(500).json({ message: "Failed to delete job" });
   }
 };
+
+/** User list with application counts - no passwords exposed  */
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isBanned: true,
+        isVerified: true,
+        createdAt: true,
+        googleId: true,
+        _count: { select: { savedJobs: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "failed to fetch users" });
+  }
+};
