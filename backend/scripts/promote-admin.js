@@ -1,6 +1,6 @@
 /**
  * CLI: promote a user to admin by email.
- * Usage: node scripts/promote-admin.js user@example.com
+ * Usage: node scripts/promote-admin.js joadmin@gmail.com
  */
 
 const { PrismaClient } = require('@prisma/client')
