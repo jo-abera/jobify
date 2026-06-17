@@ -24,6 +24,8 @@ router.delete("/jobs/:id", adminController.deleteJob);
 
 router.get("/users", adminController.getAllUsers);
 router.patch("/users/:id/ban", adminController.banUser);
+router.patch("/users/:id/unban", adminController.unbanUser);
+
 router.patch("/users/:id/promote", adminController.promoteUser);
 router.delete("/users/:id", adminController.deleteUser);
 
