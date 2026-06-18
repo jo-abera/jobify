@@ -279,3 +279,14 @@ exports.runScraper = async (req, res) => {
     res.status(500).json({ message: "Failed to start scraper" });
   }
 };
+
+
+// exports.runScraper = async (req, res) => {
+//   try {
+//     await scrapeJobs() // ← wait for everything to finish
+
+//     res.json({ message: "Scraper completed successfully" })
+//   } catch (err) {
+//     res.status(500).json({ message: "Scraper failed", error: err.message })
+//   }
+// }
