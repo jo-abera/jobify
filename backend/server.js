@@ -45,6 +45,7 @@ app.use("/api/auth", require("./src/routes/auth.routes"));
 app.use("/api/jobs", require("./src/routes/job.routes"));
 app.use("/api/tracker", require("./src/routes/tracker.routes"));
 app.use("/api/admin", require("./src/routes/admin.routes"));
+app.use('/api/resume', require('./src/routes/resume.routes'))
 
 // Test route to verify server is running
 app.get("/", (req, res) => {
