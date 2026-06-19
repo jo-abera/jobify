@@ -12,7 +12,7 @@ exports.getSavedJobs = async (req, res) => {
     const saved = await prisma.savedJob.findMany({
       where: { userId: req.user.id },
       include: { job: true },
-      orderBy: { saved },
+      orderBy: { savedAt: "desc" },
     });
     res.json(saved);
   } catch (err) {
