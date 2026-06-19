@@ -9,6 +9,8 @@ const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
+const cron = require("node-cron");
+const { scrapeJobs } = require("./src/scraper/index");
 require("dotenv").config();
 
 require("./src/config/passport");
@@ -48,6 +50,14 @@ app.use("/api/admin", require("./src/routes/admin.routes"));
 app.get("/", (req, res) => {
   res.json({ message: "Jobify API is running" });
 });
+
+// ─── Scheduler ────────────────────────────────────── 0 */6 * * * every 6 hours
+cron.schedule("0 * * * *", async () => {           // every one hour
+  console.log("Running scheduled scraper...");
+  await scrapeJobs();
+  console.log("Scheduled scrape completed");
+});
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

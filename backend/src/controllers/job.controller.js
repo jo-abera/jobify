@@ -7,27 +7,76 @@
 
 const prisma = require("../config/db");
 
+// exports.getAllJobs = async (req, res) => {
+//   try {
+//     const { search, type, location } = req.query;
+//     const jobs = await prisma.job.findMany({
+//       where: {
+//         AND: [
+//           search
+//             ? {
+//                 OR: [
+//                   { title: { contains: search } },
+//                   { company: { contains: search } },
+//                 ],
+//               }
+//             : {},
+//           type ? { type } : {},
+//           location ? { location: { contains: location } } : {},
+//         ],
+//       },
+//       orderBy: { postedAt: "desc" },
+//     });
+//     res.json(jobs);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Failed to fetch jobs" });
+//   }
+// };
+
 exports.getAllJobs = async (req, res) => {
   try {
-    const { search, type, location } = req.query;
-    const jobs = await prisma.job.findMany({
-      where: {
-        AND: [
-          search
-            ? {
-                OR: [
-                  { title: { contains: search } },
-                  { company: { contains: search } },
-                ],
-              }
-            : {},
-          type ? { type } : {},
-          location ? { location: { contains: location } } : {},
-        ],
+    const { search, type, location, page = 1, limit = 10 } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const where = {
+      AND: [
+        search
+          ? {
+              OR: [
+                { title: { contains: search } },
+                { company: { contains: search } },
+              ],
+            }
+          : {},
+        type ? { type } : {},
+        location ? { location: { contains: location } } : {},
+      ],
+    };
+
+    const [jobs, total] = await Promise.all([
+      prisma.job.findMany({
+        where,
+        orderBy: { postedAt: "desc" },
+        skip,
+        take: parseInt(limit),
+      }),
+      prisma.job.count({ where }),
+    ]);
+
+    res.json({
+      jobs,
+      pagination: {
+        total,
+        page:       parseInt(page),
+        limit:      parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit)),
+        hasNext:    parseInt(page) < Math.ceil(total / parseInt(limit)),
+        hasPrev:    parseInt(page) > 1,
       },
-      orderBy: { postedAt: "desc" },
     });
-    res.json(jobs);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch jobs" });
