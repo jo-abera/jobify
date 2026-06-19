@@ -7,6 +7,8 @@
 
 const prisma = require("../config/db");
 const { scrapeJobs } = require("../scraper");
+const { extractResumeText } = require('../utils/resumeParser')
+
 
 /** Build calandar-day buckets for the last 7 days (charts) */
 

@@ -45,7 +45,7 @@ app.use("/api/auth", require("./src/routes/auth.routes"));
 app.use("/api/jobs", require("./src/routes/job.routes"));
 app.use("/api/tracker", require("./src/routes/tracker.routes"));
 app.use("/api/admin", require("./src/routes/admin.routes"));
-app.use('/api/resume', require('./src/routes/resume.routes'))
+app.use("/api/resume", require("./src/routes/resume.routes"));
 
 // Test route to verify server is running
 app.get("/", (req, res) => {
@@ -53,12 +53,12 @@ app.get("/", (req, res) => {
 });
 
 // ─── Scheduler ────────────────────────────────────── 0 */6 * * * every 6 hours
-cron.schedule("0 * * * *", async () => {           // every one hour
+cron.schedule("0 * * * *", async () => {
+  // every one hour
   console.log("Running scheduled scraper...");
   await scrapeJobs();
   console.log("Scheduled scrape completed");
 });
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
