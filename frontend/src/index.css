@@ -1,0 +1,75 @@
+/**
+ * Global styles and design tokens.
+ *
+ * CSS variables drive theming; Tailwind (tailwind.config.js) maps utility
+ * classes like bg-bg-card to these vars. Toggle light mode via :root.light
+ * (see ThemeContext).
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark mode (default) */
+:root {
+  --color-bg-primary: #0f0f0f;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-card: #1e1e1e;
+  --color-bg-hover: #252525;
+  --color-blue-primary: #2563eb;
+  --color-blue-hover: #1d4ed8;
+  --color-blue-light: #1e3a5f;
+  --color-blue-text: #60a5fa;
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #737373;
+  --color-border: #2a2a2a;
+  --color-border-hover: #3a3a3a;
+  /* Tracker pipeline column accents */
+  --color-saved: #374151;
+  --color-applied: #1e3a5f;
+  --color-interviewing: #3b2f00;
+  --color-offered: #14532d;
+  --color-rejected: #3b1a1a;
+}
+
+/* Light mode — activated when <html class="light"> */
+:root.light {
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-hover: #f1f5f9;
+  --color-blue-primary: #2563eb;
+  --color-blue-hover: #1d4ed8;
+  --color-blue-light: #dbeafe;
+  --color-blue-text: #2563eb;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
+  --color-saved: #e2e8f0;
+  --color-applied: #dbeafe;
+  --color-interviewing: #fef3c7;
+  --color-offered: #dcfce7;
+  --color-rejected: #fee2e2;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* @react-oauth/google iframe sizing for full-width button on auth pages */
+.google-signin-wrapper > div {
+  width: 100% !important;
+}
+
+.google-signin-wrapper iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
