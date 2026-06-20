@@ -29,7 +29,7 @@ async function scoreResumeForJob(resumeText, jobId) {
 
 exports.score = async (req, res) => {
   try {
-    const { resume, jobId } = req.body;
+    const { resume, jobId } = req.body || {};
     if (!resume?.trim() || !jobId) {
       return res.status(400).json({ message: "Resume and jobId are required" });
     }
@@ -37,6 +37,16 @@ exports.score = async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error(err);
+    if (
+      err.code === "insufficient_quota" ||
+      err.status === 429 ||
+      err?.error?.code === "insufficient_quota"
+    ) {
+      return res.status(429).json({
+        message:
+          "Ai quota exceeded or rate limit reached. Please check your API plan and try again later.",
+      });
+    }
     const status = err.statusCode || 500;
     res.status(status).json({
       message: status === 404 ? err.message : "Failed to score resume",

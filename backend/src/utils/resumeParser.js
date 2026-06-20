@@ -11,7 +11,9 @@
  * @returns {string}
  */
 
-const pdfParse = require("pdf-parse");
+const pdfParseMod = require("pdf-parse");
+// pdf-parse v2 exports a `PDFParse` class; older versions export a function.
+// We'll detect the shape at runtime and use the appropriate API.
 const mammoth = require("mammoth");
 
 /** Cap length sent to GPT to control token usage and latency. */
@@ -38,30 +40,53 @@ function normalizedText(text) {
  * @returns {Promise<string>} Plain-text resume content
  */
 
+async function extractResumeText(buffer, mimetype, originalname) {
+  const ext = String(originalname || "")
+    .toLowerCase()
+    .split(".")
+    .pop();
 
-async function extractResumeText(buffer, mimetype, originalname){
-    const ext = originalname.toLowerCase().split('.').pop()
+  if (!SUPPORTED_EXTENSIONS.includes(ext)) {
+    throw new Error("Only PDF, DOCX, and TXT files are supported.");
+  }
 
-    if(!SUPPORTED_EXTENSIONS.includes(ext)){
-        throw new Error('Only PDF, DOCX, and TXT files are supported.')
+  let text = "";
+  if (ext === "txt" || mimetype === "text/plain") {
+    text = buffer.toString("utf-8");
+  } else if (ext === "pdf" || mimetype === "application/pdf") {
+    // Handle different pdf-parse versions:
+    // v1: module is a function `pdf(buffer)` -> returns { text }
+    // v2: module exports { PDFParse } class -> use parser.getText()
+    if (typeof pdfParseMod === "function") {
+      const parsed = await pdfParseMod(buffer);
+      text = parsed?.text || "";
+    } else if (pdfParseMod && typeof pdfParseMod.PDFParse === "function") {
+      const parser = new pdfParseMod.PDFParse({ data: buffer });
+      const parsed = await parser.getText();
+      text = parsed?.text || "";
+      if (typeof parser.destroy === "function") {
+        try {
+          await parser.destroy();
+        } catch (e) {
+          // ignore destroy errors
+        }
+      }
+    } else if (pdfParseMod && typeof pdfParseMod.default === "function") {
+      const parsed = await pdfParseMod.default(buffer);
+      text = parsed?.text || "";
+    } else {
+      throw new Error("Unsupported pdf-parse module shape");
     }
+  } else if (
+    ext === "docx" ||
+    mimetype ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    const result = await mammoth.extractRawText({ buffer });
+    text = result.value || "";
+  }
 
-let text = ''
-if(ext === 'txt' || mimetype === 'text/plain'){
-    text = buffer.toString('utf-8')
-}else if(ext === ' pdf'  || mimetype === 'application/pdf'){
-    const parsed = await pdfParse(buffer)
-    text = parsed.text || ''
-}else if(
-    ext === 'dox' ||
-    mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-){
-    const result = await mammoth.extractRawText({buffer})
-    text = result.value || ''
+  return normalizedText(text);
 }
 
-return normalizedText(text)
-
-}
-
-module.exports = {extractResumeText, MAX_TEXT_LENGTH, SUPPORTED_EXTENSIONS}
+module.exports = { extractResumeText, MAX_TEXT_LENGTH, SUPPORTED_EXTENSIONS };
