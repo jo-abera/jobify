@@ -52,12 +52,16 @@ app.get("/", (req, res) => {
   res.json({ message: "Jobify API is running" });
 });
 
-// ─── Scheduler ────────────────────────────────────── 0 */6 * * * every 6 hours
-cron.schedule("0 * * * *", async () => {
-  // every one hour
+// ─── Scheduler ────────────────────────────────────── every hour when the app is running
+const scraperTask = cron.schedule("0 * * * *", async () => {
   console.log("Running scheduled scraper...");
   await scrapeJobs();
   console.log("Scheduled scrape completed");
+});
+
+// Suppress node-cron warnings for past missed executions when the process was not running.
+scraperTask.on("execution:missed", () => {
+  // no-op: missed runs are ignored when the app was inactive
 });
 
 const PORT = process.env.PORT || 5000;

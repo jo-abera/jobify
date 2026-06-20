@@ -29,7 +29,8 @@ const channels = [
   "@hahujobs", // Hahu Jobs
   "@effoyjobs", // Effoy Jobs
   "@addis_zemen_vacancy", // Addis Zemen
-  "@elelanajobs", // Elelana Jobs
+  "@Maroset", // Maroset
+  // "@elelanajobs", // Elelana Jobs
 ];
 
 /**
@@ -78,7 +79,7 @@ function parseJobMessage(text, channelName) {
 
   // ─── Company — extract from between 🎴 emojis ───────
   const companyMatch =
-    normalized.match(/🎴([^🎴]+)🎴/i) || // ← @elelanajobs pattern
+    //normalized.match(/🎴([^🎴]+)🎴/i) || // ← @elelanajobs pattern
     normalized.match(/^Company[:\s]+([^(\n\r]+)/im) ||
     normalized.match(/^Organization[:\s]+([^\n\r]+)/im) ||
     normalized.match(/^Employer[:\s]+([^\n\r]+)/im) ||
