@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('token');
     if (token) {
       getMe()
-        .then(res => setUser(parseMeResponse(res)))
+        .then((res) => setUser(parseMeResponse(res)))
         .catch(() => localStorage.removeItem('token'))
         .finally(() => setLoading(false));
     } else {
