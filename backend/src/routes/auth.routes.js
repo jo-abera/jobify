@@ -13,7 +13,7 @@ const protect = require("../middleware/auth.middleware");
 const { handleAvatarUpload } = require("../middleware/avatarUpload.middleware");
 
 const router = express.Router();
-const frontend = process.env.FRONTEND_URL || "http://localhost:5173";
+const frontend = process.env.FRONTEND_URL || "http://localhost:5174";
 
 router.post("/register", authController.register);
 router.post("/login", authController.login);

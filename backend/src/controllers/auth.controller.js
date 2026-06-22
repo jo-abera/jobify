@@ -123,7 +123,7 @@ exports.register = async (req, res) => {
     // Send a welcome email to the user. If the email is not configured, Log a message to the console and continue without failing the registration process
     if (Email.isConfigured()) {
       try {
-        const url = `${process.env.FRONTEND_URL || "http://localhost:5173"}/jobs`;
+        const url = `${process.env.FRONTEND_URL || "http://localhost:5174"}/jobs`;
         await new Email(newUser, url).sendWelcome();
       } catch (emailErr) {
         console.log("Welcome email faild:", emailErr.message);
@@ -183,7 +183,7 @@ exports.login = async (req, res) => {
  */
 exports.googleCallback = (req, res) => {
   try {
-    const frontend = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontend = process.env.FRONTEND_URL || "http://localhost:5174";
 
     if (req.user?.isBanned) {
       return res.redirect(`${frontend}/login?error=banned`);
@@ -194,7 +194,7 @@ exports.googleCallback = (req, res) => {
     });
     res.redirect(`${frontend}/auth/callback?token=${token}`);
   } catch (err) {
-    const frontend = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontend = process.env.FRONTEND_URL || "http://localhost:5174";
     res.redirect(`${frontend}/login?error=google_failed`);
   }
 };
@@ -270,7 +270,7 @@ exports.forgotPassword = async (req, res) => {
 
     // It is used to generate a reset URL.
     // Combines the frontend URL with the reset token to create a valid reset link.
-    const resetURL = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+    const resetURL = `${process.env.FRONTEND_URL || "http://localhost:5174"}/reset-password/${resetToken}`;
 
     if (!Email.isConfigured()) {
       console.log("[dev] Password reset URL (email not configured):", resetURL);

@@ -13,9 +13,9 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(''); //Array destructuring
-  const { login } = useAuth(); // object destructuring
-  const navigate = useNavigate(); // Simple variable assignment
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +28,9 @@ export default function Register() {
       login(user, token);
       navigate('/tracker');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(
+        err.response?.data?.message || err.message || 'Registration failed',
+      );
     } finally {
       setLoading(false);
     }

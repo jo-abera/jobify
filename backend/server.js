@@ -16,7 +16,7 @@ require("dotenv").config();
 require("./src/config/passport");
 
 const app = express();
-const frontendOrigin = process.env.FRONTEND_URL || "https://localhost:5173";
+const frontendOrigin = process.env.FRONTEND_URL || "http://localhost:5174";
 
 // CORS configuration to allow requests from the frontend(Cross Origin )
 app.use(
