@@ -41,9 +41,6 @@ export default function ResetPassword() {
         <p className="text-text-secondary mb-6 text-sm">
           Choose a new password for your account.
         </p>
-        <p className="text-text-secondary mb-6 text-sm">
-          Choose a new password for your account.
-        </p>
         {error && (
           <div className="mb-4 p-3 rounded-lg bg-rejected text-red-300 text-sm">
             {error}
