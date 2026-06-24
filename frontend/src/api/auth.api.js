@@ -8,6 +8,7 @@ export const register = (data) => api.post('/api/auth/register', data);
 export const login = (data) => api.post('/api/auth/login', data);
 export const getMe = () => api.get('/api/auth/me');
 export const forgotPassword = (data) => api.post('/api/auth/forgot-password', data)
+export const resetPassword = (token, data) => api.patch(`/api/auth/reset-password/${token}`, data)
 
 
 /** Google OAuth starts with a full-page redirect to the backend (Passport). */
