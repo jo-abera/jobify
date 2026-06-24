@@ -41,29 +41,34 @@ export default function ResetPassword() {
         <p className="text-text-secondary mb-6 text-sm">
           Choose a new password for your account.
         </p>
-        <div className="mb-4 p-3 rounded-lg bg-rejected text-red-300 text-sm">
-          error
-        </div>
-        <form class="space=y-4">
+        <p className="text-text-secondary mb-6 text-sm">
+          Choose a new password for your account.
+        </p>
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-rejected text-red-300 text-sm">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleSubmit} class="space=y-4">
           <div>
             <label className="block text-sm text-text-secondary mb-1">
               New password
             </label>
             <input
               type="password"
-              value
-              onChange
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
-              minLength
+              minLength={6}
               className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-blue-primary"
             />
           </div>
           <button
             type="submit"
-            disabled
+            disabled={loading}
             className="w-full bg-blue-primary hover:bg-blue-hover text-white py-2.5 rounded-lg font-medium disabled:opacity-50"
           >
-            Saving...
+            {loading ? 'Saving...' : 'Reset password'}
           </button>
         </form>
         <p className="mt-6 text-center text-text-secondary text-sm">
