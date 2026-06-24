@@ -11,7 +11,7 @@ import { parseMeResponse } from '../utils/authResponse';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const login = useAuth();
+  const {login} = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
