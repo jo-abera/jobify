@@ -8,6 +8,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 export default function () {
   const { user, logout } = useAuth();
@@ -77,7 +78,9 @@ export default function () {
         </div>
       </div>
       {showThemeToggle && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2"></div>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <ThemeToggle />
+        </div>
       )}
     </nav>
   );
