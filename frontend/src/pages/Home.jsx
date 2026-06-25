@@ -4,10 +4,35 @@
  * Hero search redirects to /jobs with query param; stats and latest jobs
  * come from GET /api/jobs/stats and GET /api/jobs (first 6).
  */
-
-import { Link } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { getJobs, getStatus } from '../api/jobs.api';
+//import JobCard from '../components/JobCard'
 
 export default function () {
+  const [search, setSearch] = useState('');
+  const [latestJobs, setLatestJobs] = useState([]);
+  const [stats, setStats] = useState({
+    totalJobs: 0,
+    companiesTracked: 0,
+    jobSeeker: 0,
+  });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    getJobs()
+      .then((res) => setLatestJobs(res.data.slice(0, 6)))
+      .catch(() => {});
+    getStatus()
+      .then((res) => setStats(res.data))
+      .catch(() => {});
+  }, []);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate(`/jobs?search=${encodeURIComponent(search)}`);
+  };
+
   return (
     <div>
       <section className="max-w-6xl mx-auto px-4 py-20 text-center">
