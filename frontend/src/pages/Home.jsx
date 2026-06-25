@@ -29,7 +29,7 @@ export default function () {
   }, []);
 
   const handleSearch = (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent form reload
     navigate(`/jobs?search=${encodeURIComponent(search)}`);
   };
 
@@ -47,8 +47,8 @@ export default function () {
         <form className="max-w-xl mx-auto flex gap-2">
           <input
             type="text"
-            value
-            onChange
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search jobs, companies..."
             className="flex-1 bg-bg-card border border-border rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-blue-primary"
           />
@@ -63,18 +63,20 @@ export default function () {
       <section className="max-w-6xl mx-auto px-4 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-bg-card border border-border rounded-card p-6 text-center">
-            <p className="text-3xl font-bold text-blue-text">stats-totalJobs</p>
+            <p className="text-3xl font-bold text-blue-text">
+              {stats.totalJobs}
+            </p>
             <p className="text-text-secondary mt-1">Total Jobs</p>
           </div>
           <div className="bg-bg-card border border-border rounded-card p-6 text-center">
             <p className="text-3xl font-bold text-blue-text">
-              stats-companiesTracked
+              {stats.companiesTracked}
             </p>
             <p className="text-text-secondary mt-1">Companies Tracked</p>
           </div>
           <div className="bg-bg-card border border-border rounded-card p-6 text-center">
             <p className="text-3xl font-bold text-blue-text">
-              stats-jobSeekers
+              {stats.jobSeekers}
             </p>
             <p className="text-text-secondary mt-1">Job Seekers</p>
           </div>
@@ -93,9 +95,11 @@ export default function () {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
-        <p className="text-text-muted text-center py-12">
-          No jobs yet. Run the seed script to add sample data.
-        </p>
+        {latestJobs.length === 0 && (
+          <p className="text-text-muted text-center py-12">
+            No jobs yet. Run the seed script to add sample data.
+          </p>
+        )}
       </section>
     </div>
   );
