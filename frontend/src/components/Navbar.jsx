@@ -6,8 +6,8 @@
  */
 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function () {
   const { user, logout } = useAuth();
@@ -32,23 +32,21 @@ export default function () {
     return () => document.removeEventListener('mousedown', onDoClick);
   }, []);
 
- const getInitials = (name) => {
-    if (!name) return 'U'
+  const getInitials = (name) => {
+    if (!name) return 'U';
     return name
       .split(' ')
       .filter(Boolean)
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
-      .join('')
-  }
+      .join('');
+  };
 
   const handleLogout = () => {
-    setMenuOpen(false)
-    logout()
-    navigate('/')
-  }
-
-
+    setMenuOpen(false);
+    logout();
+    navigate('/');
+  };
 
   return (
     <nav className="relative border-b border-border bg-bg-secondary sticky top-0 z-50">
@@ -78,6 +76,9 @@ export default function () {
           </Link>
         </div>
       </div>
+      {showThemeToggle && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2"></div>
+      )}
     </nav>
   );
 }
