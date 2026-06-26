@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getJobs, getStatus } from '../api/jobs.api';
-import JobCard from '../components/JobCard'
+//import JobCard from '../components/JobCard'
 
 export default function () {
   const [search, setSearch] = useState('');
@@ -94,7 +94,7 @@ export default function () {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <JobCard key={job.id} job={job}/>
+           {/* <JobCard key={job.id} job={job}/>*/}
         </div>
 
         {latestJobs.length === 0 && (
