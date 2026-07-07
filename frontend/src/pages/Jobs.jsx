@@ -93,7 +93,7 @@ export default function Jobs() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [usePreference, setUsePreference] = useState(false);
+  const [usePreferences, setUsePreferences] = useState(false);
   const [savedJobIds, setSavedJobIds] = useState([]);
   const { user } = useAuth();
 
