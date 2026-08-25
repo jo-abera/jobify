@@ -36,7 +36,7 @@ const prisma = require("../config/db");
 
 exports.getAllJobs = async (req, res) => {
   try {
-    const { search, type, location, page = 1, limit = 10 } = req.query;
+    const { search, type, location, page = 1, limit = 15 } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -45,13 +45,15 @@ exports.getAllJobs = async (req, res) => {
         search
           ? {
               OR: [
-                { title: { contains: search } },
-                { company: { contains: search } },
+                { title: { contains: search, mode: "insensitive" } },
+                { company: { contains: search, mode: "insensitive" } },
               ],
             }
           : {},
         type ? { type } : {},
-        location ? { location: { contains: location } } : {},
+        location
+          ? { location: { contains: location, mode: "insensitive" } }
+          : {},
       ],
     };
 
@@ -69,14 +71,13 @@ exports.getAllJobs = async (req, res) => {
       jobs,
       pagination: {
         total,
-        page:       parseInt(page),
-        limit:      parseInt(limit),
+        page: parseInt(page),
+        limit: parseInt(limit),
         totalPages: Math.ceil(total / parseInt(limit)),
-        hasNext:    parseInt(page) < Math.ceil(total / parseInt(limit)),
-        hasPrev:    parseInt(page) > 1,
+        hasNext: parseInt(page) < Math.ceil(total / parseInt(limit)),
+        hasPrev: parseInt(page) > 1,
       },
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch jobs" });
@@ -138,26 +139,21 @@ exports.deleteJob = async (req, res) => {
   }
 };
 
-
-
 /** Public aggregate stats for the marketing Home page. */
 
-exports.getStats = async(req, res)=>{
-    try{
-    const [totalJobs, companies] =  await Promise.all([
-        prisma.job.count(),
-        prisma.job.findMany({select: {company: true}, distinct:['company']})
-    ])
-    const userCount = await prisma.user.count()
+exports.getStats = async (req, res) => {
+  try {
+    const [totalJobs, companies] = await Promise.all([
+      prisma.job.count(),
+      prisma.job.findMany({ select: { company: true }, distinct: ["company"] }),
+    ]);
+    const userCount = await prisma.user.count();
     res.json({
-        totalJobs,
-        companiesTracked: companies.length,
-        jobSeekers: userCount
-
-    })
-
-    }catch(err){
-        res.status(500).json({message: 'Failed to fetch stats'})
-
-    }
-}
+      totalJobs,
+      companiesTracked: companies.length,
+      jobSeekers: userCount,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+};

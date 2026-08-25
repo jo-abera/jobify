@@ -6,8 +6,8 @@
  */
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getJobs, getStatus } from '../api/jobs.api';
-//import JobCard from '../components/JobCard'
+import { getJobs, getStats } from '../api/jobs.api';
+import JobCard from '../components/JobCard';
 
 export default function () {
   const [search, setSearch] = useState('');
@@ -21,9 +21,9 @@ export default function () {
 
   useEffect(() => {
     getJobs()
-      .then((res) => setLatestJobs(res.data.slice(0, 6)))
+      .then((res) => setLatestJobs(res.data.jobs.slice(0, 15)))
       .catch(() => {});
-    getStatus()
+    getStats()
       .then((res) => setStats(res.data))
       .catch(() => {});
   }, []);
@@ -94,7 +94,9 @@ export default function () {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-           {/* <JobCard key={job.id} job={job}/>*/}
+          {latestJobs.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
         </div>
 
         {latestJobs.length === 0 && (
