@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getJobById } from '../api/job.api';
+import { getJobById } from '../api/jobs.api';
 import { saveJob, getSavedJobs } from '../api/tracker.api';
 import { scoreResume, scoreResumeFile } from '../api/resume.api';
 import { useAuth } from '../context/AuthContext';
@@ -78,13 +78,12 @@ export default function JobDetail() {
         inputMode === 'upload'
           ? await scoreResumeFile(id, resumeFile)
           : await scoreResume({ resume: resumeText, jobId: id });
+      setScoreResult(res.data);
     } catch (err) {
       setScoreError(
         err.response?.data?.message ||
           'Failed to score resume. Check your GROQ_API_KEY.'
       );
-    } finally {
-      setScoring(false);
     }
   };
 
@@ -251,9 +250,7 @@ export default function JobDetail() {
             <p className="mt-4 text-red-300 text-sm">{scoreError}</p>
           )}
 
-          {
-          
-          && (
+          {scoreResult && (
             <ResumeScoreResult
               result={scoreResult}
               compact
