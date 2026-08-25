@@ -40,7 +40,7 @@ const channels = [
  * Telegram job posts come in many different formats depending on the channel,
  * so this function tries several regex patterns per field until one matches.
  */
-function parseJobMessage(text, channelName) {
+function parseJobMessage(text, channelName, messageUrl) {
   if (!text) return null; // Skip empty messages entirely
 
   // ─── Normalize — add newlines before known keywords ──
@@ -155,7 +155,10 @@ function parseJobMessage(text, channelName) {
     location,
     salary,
     type,
-    url: url || `https://t.me/${channelName.replace("@", "")}`, // fallback URL if message has none
+    url:
+      url ||
+      messageUrl ||
+      `https://t.me/${channelName.replace("@", "")}`, // fallback URL if message has none
     description: text.trim().substring(0, 2000), // store original raw text (capped length)
     source: `https://t.me/${channelName.replace("@", "")}`,
   };
@@ -186,15 +189,21 @@ async function scrapeChannel(channel) {
 
     // Try to parse each message into a job; skip ones that aren't valid job posts
     for (const msg of messages) {
-      const job = parseJobMessage(msg.text, channel);
+      const job = parseJobMessage(msg.text, channel, msg.messageUrl);
       if (!job) continue;
 
       // upsert = insert if new, otherwise leave existing record unchanged
       // (using the job URL as the unique key to avoid duplicate entries)
       await prisma.job.upsert({
         where: { url: job.url },
-        update: {},
-        create: job,
+        update: {
+          ...job,
+          ...(msg.postedAt ? { postedAt: new Date(msg.postedAt) } : {}),
+        },
+        create: {
+          ...job,
+          ...(msg.postedAt ? { postedAt: new Date(msg.postedAt) } : {}),
+        },
       });
       saved++;
     }
@@ -234,6 +243,13 @@ async function fetchPublicChannelMessages(channel) {
     $(".tgme_widget_message_text").each((i, el) => {
       messages.push({
         text: $(el).text().trim(),
+        messageUrl: `https://t.me/${$(el)
+          .closest(".tgme_widget_message")
+          .attr("data-post")}`,
+        postedAt: $(el)
+          .closest(".tgme_widget_message")
+          .find("time")
+          .attr("datetime"),
       });
     });
 
