@@ -50,9 +50,6 @@ module.exports = { scoreResume };
 
  */
 
-
-
-
 /*
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
@@ -81,14 +78,13 @@ async function scoreResume(resume, jobDescription) {
 module.exports = { scoreResume };
 */
 
-
 const Groq = require("groq-sdk");
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function scoreResume(resume, jobDescription) {
   const response = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-20b",
     max_tokens: 500,
     messages: [
       {
