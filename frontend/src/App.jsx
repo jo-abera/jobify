@@ -10,6 +10,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import AuthCallback from './pages/AuthCallback';
 import Navbar from './components/Navbar';
+import Tracker from './pages/Tracker'
+import JobDetail from './pages/JobDetail'
+
 
 function App() {
   return (
@@ -20,11 +23,15 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/:id" element={<JobDetail />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/tracker" element={
+              <ProtectedRoute><Tracker /></ProtectedRoute>
+            } />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
