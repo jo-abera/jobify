@@ -15,7 +15,8 @@ import Tracker from './pages/Tracker';
 import JobDetail from './pages/JobDetail';
 import Resume from './pages/Resume';
 import Profile from './pages/Profile';
-
+import AdminRoute from './components/AdminRoute';
+import AdminDashboard from './pages/admin/AdminDashboard';
 function App() {
   return (
     <ThemeProvider>
@@ -53,6 +54,14 @@ function App() {
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
               }
             />
           </Routes>
