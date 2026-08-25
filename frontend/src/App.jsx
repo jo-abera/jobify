@@ -13,6 +13,8 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Tracker from './pages/Tracker';
 import JobDetail from './pages/JobDetail';
+import Resume from './pages/Resume';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -42,6 +44,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Resume />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               }
             />
