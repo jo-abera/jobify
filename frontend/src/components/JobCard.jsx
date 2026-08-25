@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { saveJob } from '../api/tracker.api'
+import { formatDate } from '../utils/formatDate'
 
 export default function JobCard({ job, savedJobIds = [], onSaved }) {
   const { user } = useAuth()
@@ -60,6 +61,11 @@ export default function JobCard({ job, savedJobIds = [], onSaved }) {
           <h3 className="font-semibold text-text-primary truncate">{job.title}</h3>
           <p className="text-text-secondary text-sm mt-0.5">{job.company}</p>
           <p className="text-text-muted text-sm mt-1">{job.location}</p>
+          {job.postedAt && (
+            <p className="inline-block mt-2 px-2 py-1 rounded bg-blue-light text-blue-text text-xs font-medium">
+              Posted {formatDate(job.postedAt)}
+            </p>
+          )}
           {job.salary && (
             <p className="text-blue-text text-sm mt-1">{job.salary}</p>
           )}
