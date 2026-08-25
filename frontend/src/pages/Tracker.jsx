@@ -55,7 +55,9 @@ export default function Tracker() {
   const handleStatusChange = async (savedId, status) => {
     try {
       const updated = await updateStatus(savedId, { status });
-      setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated : s)));
+      setSavedJobs((prev) =>
+        prev.map((s) => (s.id === savedId ? updated.data : s))
+      );
     } catch {
       /* optimistic UI not rolled back — user can retry */
     }
