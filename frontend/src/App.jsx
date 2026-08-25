@@ -37,6 +37,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/resume"
+              element={
+                <ProtectedRoute>
+                  <Resume />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
