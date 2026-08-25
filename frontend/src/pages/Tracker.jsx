@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { getSavedJobs, updateStatus, removeJob } from '../api/tracker.api';
 import { formatDate } from '../utils/formatDate';
 
