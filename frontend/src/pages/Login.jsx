@@ -14,6 +14,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false); // Array Destructuring
   const { login } = useAuth(); // Object Destructuring
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // This effect checks the URL query parameters for an error.
