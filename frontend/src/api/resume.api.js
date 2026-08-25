@@ -1,6 +1,6 @@
 /** Jobs API — public listing and home stats. */
-import api from './axios'
+import api from './axios';
 
-export const getJobs = (params) => api.get('/api/jobs', { params })
-export const getJobById = (id) => api.get(`/api/jobs/${id}`)
-export const getStats = () => api.get('/api/jobs/stats')
+export const getJobs = (params) => api.get('/api/jobs', { params });
+export const getJobById = (id) => api.get(`/api/jobs/${id}`);
+export const getStats = () => api.get('/api/jobs/stats');
