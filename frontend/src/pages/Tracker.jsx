@@ -14,10 +14,10 @@ import { formatDate } from '../utils/formatDate';
 /** Visible kanban columns (status id must match SavedJob.status in the API). */
 
 const COLUMNS = [
-  { id: 'saved', label: 'Saved', color: 'border-t-saved' },
-  { id: 'applied', label: 'Applied', color: 'border-t-applied' },
-  { id: 'interviewing', label: 'Interviewing', color: 'border-t-interviewing' },
-  { id: 'offered', label: 'Offered', color: 'border-t-offered' },
+  { id: 'saved', label: 'Saved' },
+  { id: 'applied', label: 'Applied' },
+  { id: 'interviewing', label: 'Interviewing' },
+  { id: 'offered', label: 'Offered' },
 ];
 
 /** All statuses allowed in the per-card dropdown (includes rejected). */
@@ -111,7 +111,7 @@ export default function Tracker() {
         {COLUMNS.map((col) => (
           <div key={col.id} className="min-h-[400px]">
             <div
-              className={`bg-bg-secondary border border-border border-t-4 ${col.color} rounded-t-card px-4 py-3`}
+              className="bg-bg-secondary border border-border border-t-4 border-t-border rounded-t-card px-4 py-3"
             >
               <h2 className="font-semibold text-text-primary">{col.label}</h2>
               <p className="text-text-muted text-xs">
