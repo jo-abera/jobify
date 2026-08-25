@@ -4,10 +4,10 @@
  * Both endpoints return the same shape: { score, matchedKeywords, missingKeywords, summary }.
  */
 
-import api from './axios'
+import api from './axios';
 
 /** Score pasted resume text — POST /api/resume/score */
-export const scoreResume = (data) => api.post('/api/resume/score', data)
+export const scoreResume = (data) => api.post('/api/resume/score', data);
 
 /**
  * Score uploaded resume file — POST /api/resume/score-file (multipart).
@@ -15,10 +15,10 @@ export const scoreResume = (data) => api.post('/api/resume/score', data)
  * @param {File} file - PDF, DOCX, or TXT
  */
 export const scoreResumeFile = (jobId, file) => {
-  const formData = new FormData()
-  formData.append('resumeFile', file)
-  formData.append('jobId', jobId)
+  const formData = new FormData();
+  formData.append('resumeFile', file);
+  formData.append('jobId', jobId);
   return api.post('/api/resume/score-file', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-}
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
