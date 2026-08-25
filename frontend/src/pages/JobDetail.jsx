@@ -39,12 +39,12 @@ export default function JobDetail() {
 
   useEffect(() => {
     if (user) {
-      getSavedJobs().then(
-        ((res) => {
+      getSavedJobs()
+        .then((res) => {
           const found = res.data.some((s) => s.jobId === id);
           setSaved(found);
-        }).catch(() => {})
-      );
+        })
+        .catch(() => {});
     }
   }, [user, id]);
 
