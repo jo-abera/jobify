@@ -155,10 +155,7 @@ function parseJobMessage(text, channelName, messageUrl) {
     location,
     salary,
     type,
-    url:
-      url ||
-      messageUrl ||
-      `https://t.me/${channelName.replace("@", "")}`, // fallback URL if message has none
+    url: url || messageUrl || `https://t.me/${channelName.replace("@", "")}`, // fallback URL if message has none
     description: text.trim().substring(0, 2000), // store original raw text (capped length)
     source: `https://t.me/${channelName.replace("@", "")}`,
   };
