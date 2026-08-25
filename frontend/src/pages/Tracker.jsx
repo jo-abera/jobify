@@ -110,9 +110,7 @@ export default function Tracker() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {COLUMNS.map((col) => (
           <div key={col.id} className="min-h-[400px]">
-            <div
-              className="bg-bg-secondary border border-border border-t-4 border-t-border rounded-t-card px-4 py-3"
-            >
+            <div className="bg-bg-secondary border border-border border-t-4 border-t-border rounded-t-card px-4 py-3">
               <h2 className="font-semibold text-text-primary">{col.label}</h2>
               <p className="text-text-muted text-xs">
                 {getColumnJobs(col.id).length} jobs
