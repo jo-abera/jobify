@@ -44,7 +44,7 @@ export default function () {
           board, and score your resume with AI.
         </p>
 
-        <form className="max-w-xl mx-auto flex gap-2">
+        <form onSubmit={handleSearch} className="max-w-xl mx-auto flex gap-2">
           <input
             type="text"
             value={search}
