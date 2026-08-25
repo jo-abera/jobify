@@ -6,30 +6,32 @@
  * should catch failures and not block the main auth flow.
  */
 
-const nodemailer = require('nodemailer')
+const nodemailer = require("nodemailer");
 
 class Email {
   constructor(user, url) {
-    this.to = user.email
-    this.name = user.name.split(' ')[0]
-    this.url = url
-    this.from = process.env.EMAIL_FROM || 'jobify@example.com'
+    this.to = user.email;
+    this.name = user.name.split(" ")[0];
+    this.url = url;
+    this.from = process.env.EMAIL_FROM || "jobify@example.com";
   }
 
   createTransport() {
     return nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: Number(process.env.EMAIL_PORT) || 2525,
+      secure: process.env.EMAIL_PORT === "465", // true for port 465, false for 587/2525
+
       auth: {
         user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    })
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
   }
 
   /** Returns false when SMTP is not configured (local dev without Mailtrap). */
   static isConfigured() {
-    return Boolean(process.env.EMAIL_HOST && process.env.EMAIL_USERNAME)
+    return Boolean(process.env.EMAIL_HOST && process.env.EMAIL_USERNAME);
   }
 
   async send(subject, message) {
@@ -50,24 +52,24 @@ class Email {
             If you did not request this, please ignore this email.
           </p>
         </div>
-      `
-    }
-    await this.createTransport().sendMail(mailOptions)
+      `,
+    };
+    await this.createTransport().sendMail(mailOptions);
   }
 
   async sendWelcome() {
     await this.send(
-      'Welcome to Jobify!',
-      'Welcome to Jobify! We are excited to help you find your next job. Start browsing job listings and track your applications in one place.'
-    )
+      "Welcome to Jobify!",
+      "Welcome to Jobify! We are excited to help you find your next job. Start browsing job listings and track your applications in one place.",
+    );
   }
 
   async sendPasswordReset() {
     await this.send(
-      'Your password reset link (valid for 10 minutes)',
-      'You requested a password reset. Click the button below to set a new password. This link expires in 10 minutes.'
-    )
+      "Your password reset link (valid for 10 minutes)",
+      "You requested a password reset. Click the button below to set a new password. This link expires in 10 minutes.",
+    );
   }
 }
 
-module.exports = Email
+module.exports = Email;
