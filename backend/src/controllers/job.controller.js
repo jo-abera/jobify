@@ -54,6 +54,7 @@ exports.getAllJobs = async (req, res) => {
         location
           ? { location: { contains: location, mode: "insensitive" } }
           : {},
+          { postedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
       ],
     };
 
