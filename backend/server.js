@@ -17,11 +17,23 @@ require("./src/config/passport");
 
 const app = express();
 const frontendOrigin = process.env.FRONTEND_URL || "http://localhost:5174";
+const isLocalhostOrigin = (origin) =>
+  /^https?:\/\/localhost:\d+$/.test(origin);
 
-// CORS configuration to allow requests from the frontend(Cross Origin )
+// CORS — in dev, allow any localhost port (Vite may use 5173/5174/5175 if busy).
 app.use(
   cors({
-    origin: frontendOrigin,
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (
+        process.env.NODE_ENV !== "production" &&
+        isLocalhostOrigin(origin)
+      ) {
+        return callback(null, true);
+      }
+      if (origin === frontendOrigin) return callback(null, true);
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   }),
 );
