@@ -2,7 +2,7 @@
 
 Jobify is a full-stack job discovery and application tracking platform. It aggregates recent job listings, helps users manage applications on a Kanban board, and uses AI to compare resumes with job descriptions.
 
-[Live Demo](https://jobify-jo.vercel.app/)
+[JObify Website Live Demo](https://jobify-jo.vercel.app/)
 
 ![Jobify](frontend/src/assets/home.png)
 
