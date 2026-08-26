@@ -5,13 +5,14 @@
  * CORS is limited to FRONTEND_URL when set.
  */
 
+require("dotenv").config({ override: true });
+
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const cron = require("node-cron");
 const { scrapeJobs } = require("./src/scraper/index");
-require("dotenv").config();
 
 require("./src/config/passport");
 
