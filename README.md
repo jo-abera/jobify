@@ -302,4 +302,5 @@ Set the Render `FRONTEND_URL` to the exact Vercel URL. This is required for CORS
 
 ## License
 
-No license has been specified for this project yet.
+This project is being developed as a learning and portfolio project.
+
