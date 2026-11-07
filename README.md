@@ -291,6 +291,20 @@ VITE_API_URL=https://your-api.onrender.com
 
 Set the Render `FRONTEND_URL` to the exact Vercel URL. This is required for CORS. Update Google OAuth authorized origins and callback URLs to use the production domains.
 
+### Render free tier (sleep + jobs scraper)
+
+Render web services spin down after ~15 minutes without **inbound** HTTP traffic. While asleep, the hourly scraper does not run and the API may be slow on first visit.
+
+- The frontend pings `GET /api/health` on production (default every 14 minutes while a tab is open).
+- On Render, the scraper runs automatically ~10 seconds after the server wakes (`SCRAPER_ON_STARTUP`, enabled by default on Render).
+- For 24/7 uptime without an open browser tab, use a free monitor (for example [UptimeRobot](https://uptimerobot.com)) to request `https://your-api.onrender.com/api/health` every 5–14 minutes.
+
+Optional Vercel variable (not recommended below ~5 minutes):
+
+```env
+VITE_BACKEND_PING_MS=840000
+```
+
 ## Security Notes
 
 - Use separate production credentials; never reuse development secrets.

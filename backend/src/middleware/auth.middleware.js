@@ -65,7 +65,7 @@ module.exports = async (req, res, next) => {
       );
 
       if (decoded.iat < changedTimestamp) {
-        return res.staus(401).json({
+        return res.status(401).json({
           message: "User recently changed password. Please log in again.",
         });
       }

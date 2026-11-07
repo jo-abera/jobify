@@ -65,6 +65,11 @@ app.get("/", (req, res) => {
   res.json({ message: "Jobify API is running" });
 });
 
+/** Lightweight health check — use with UptimeRobot / frontend keep-alive pings */
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true });
+});
+
 // ─── Scheduler ────────────────────────────────────── every hour when the app is running
 const scraperTask = cron.schedule("0 * * * *", async () => {
   console.log("Running scheduled scraper...");
@@ -78,6 +83,25 @@ scraperTask.on("execution:missed", () => {
 });
 
 const PORT = process.env.PORT || 5000;
+const STARTUP_SCRAPER_DELAY_MS = Number(process.env.STARTUP_SCRAPER_DELAY_MS) || 10_000;
+
+function maybeRunStartupScraper() {
+  const onRender = Boolean(process.env.RENDER);
+  const enabled =
+    process.env.SCRAPER_ON_STARTUP === "true" ||
+    (onRender && process.env.SCRAPER_ON_STARTUP !== "false");
+
+  if (!enabled) return;
+
+  setTimeout(() => {
+    console.log("[scraper] Startup scrape after wake...");
+    scrapeJobs().catch((err) =>
+      console.error("[scraper] Startup scrape failed:", err.message || err),
+    );
+  }, STARTUP_SCRAPER_DELAY_MS);
+}
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  maybeRunStartupScraper();
 });
