@@ -316,4 +316,5 @@ VITE_BACKEND_PING_MS=840000
 
 ## License
 
-No license has been specified for this project yet.
+This project is being developed as a learning and portfolio project.
+
