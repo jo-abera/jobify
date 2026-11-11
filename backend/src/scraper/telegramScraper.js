@@ -1,6 +1,6 @@
 // Import the Prisma client instance (used to save jobs to the database)
-const prisma = require("../config/db");
 const { isWithinListingWindow } = require("../utils/jobListingWindow");
+const { saveScrapedJob } = require("./saveScrapedJob");
 
 // Will hold the Telegram bot instance once created (singleton pattern)
 let bot;
@@ -135,7 +135,7 @@ function parseJobMessage(text, channelName, messageUrl) {
   const location = clean(locationMatch?.[1], 100) || "Addis Ababa, Ethiopia";
   const salary = clean(salaryMatch?.[1], 100) || null;
   const type = clean(typeMatch?.[1], 80) || "Full-time";
-  const url = urlMatch?.[1]?.trim();
+  const applyLink = urlMatch?.[1]?.trim() || null;
 
   // Reject messages that aren't actually valid job posts —
   // e.g. too short, or matched junk text instead of a real title
@@ -156,7 +156,8 @@ function parseJobMessage(text, channelName, messageUrl) {
     location,
     salary,
     type,
-    url: url || messageUrl || `https://t.me/${channelName.replace("@", "")}`, // fallback URL if message has none
+    applyLink,
+    messageUrl: messageUrl || null,
     description: text.trim().substring(0, 2000), // store original raw text (capped length)
     source: `https://t.me/${channelName.replace("@", "")}`,
   };
@@ -194,13 +195,7 @@ async function scrapeChannel(channel) {
 
       const postedAt = new Date(msg.postedAt);
 
-      // upsert = insert if new, otherwise update fields (unique key: job url)
-      await prisma.job.upsert({
-        where: { url: job.url },
-        update: { ...job, postedAt },
-        create: { ...job, postedAt },
-      });
-      saved++;
+      if (await saveScrapedJob(job, postedAt)) saved++;
     }
 
     console.log(`Saved ${saved} jobs from ${channel}`);
