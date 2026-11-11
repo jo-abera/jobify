@@ -13,6 +13,7 @@ const session = require("express-session");
 const passport = require("passport");
 const cron = require("node-cron");
 const { scrapeJobs } = require("./src/scraper/index");
+const { removeOldJobs } = require("./src/jobs/removeOldJobs");
 
 require("./src/config/passport");
 
@@ -103,5 +104,8 @@ function maybeRunStartupScraper() {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  removeOldJobs().catch((err) =>
+    console.error("[jobs] Could not remove old jobs:", err.message || err),
+  );
   maybeRunStartupScraper();
 });

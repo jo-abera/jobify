@@ -6,6 +6,7 @@
  */
 
 const prisma = require("../config/db");
+const { postedAtListingFilter, isWithinListingWindow } = require("../utils/jobListingWindow");
 
 // exports.getAllJobs = async (req, res) => {
 //   try {
@@ -54,7 +55,7 @@ exports.getAllJobs = async (req, res) => {
         location
           ? { location: { contains: location, mode: "insensitive" } }
           : {},
-        { postedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+        postedAtListingFilter(),
       ],
     };
 
@@ -91,6 +92,9 @@ exports.getJobById = async (req, res) => {
       where: { id: req.params.id },
     });
     if (!job) return res.status(404).json({ message: "Job not found" });
+    if (!isWithinListingWindow(job.postedAt)) {
+      return res.status(404).json({ message: "Job not found" });
+    }
     res.json(job);
   } catch (err) {
     console.error(err); // developer log
@@ -144,9 +148,14 @@ exports.deleteJob = async (req, res) => {
 
 exports.getStats = async (req, res) => {
   try {
+    const listingWhere = postedAtListingFilter();
     const [totalJobs, companies] = await Promise.all([
-      prisma.job.count(),
-      prisma.job.findMany({ select: { company: true }, distinct: ["company"] }),
+      prisma.job.count({ where: listingWhere }),
+      prisma.job.findMany({
+        where: listingWhere,
+        select: { company: true },
+        distinct: ["company"],
+      }),
     ]);
     const userCount = await prisma.user.count();
     res.json({

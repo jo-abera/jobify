@@ -4,10 +4,12 @@
 // Declared as 'async' because scraping likely involves waiting on network requests
 
 const { scrapeTelegramChannels } = require("./telegramScraper");
+const { removeOldJobs } = require("../jobs/removeOldJobs");
 
 async function scrapeJobs() {
   console.log("Scraper started..."); // Log message to show the process has begun
 
+  await removeOldJobs();
   await scrapeTelegramChannels();
 
   console.log("Scraper finished"); // Log message to confirm the process is done

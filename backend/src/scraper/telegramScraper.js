@@ -1,5 +1,6 @@
 // Import the Prisma client instance (used to save jobs to the database)
 const prisma = require("../config/db");
+const { isWithinListingWindow } = require("../utils/jobListingWindow");
 
 // Will hold the Telegram bot instance once created (singleton pattern)
 let bot;
@@ -186,21 +187,18 @@ async function scrapeChannel(channel) {
 
     // Try to parse each message into a job; skip ones that aren't valid job posts
     for (const msg of messages) {
+      if (!msg.postedAt || !isWithinListingWindow(msg.postedAt)) continue;
+
       const job = parseJobMessage(msg.text, channel, msg.messageUrl);
       if (!job) continue;
 
-      // upsert = insert if new, otherwise leave existing record unchanged
-      // (using the job URL as the unique key to avoid duplicate entries)
+      const postedAt = new Date(msg.postedAt);
+
+      // upsert = insert if new, otherwise update fields (unique key: job url)
       await prisma.job.upsert({
         where: { url: job.url },
-        update: {
-          ...job,
-          ...(msg.postedAt ? { postedAt: new Date(msg.postedAt) } : {}),
-        },
-        create: {
-          ...job,
-          ...(msg.postedAt ? { postedAt: new Date(msg.postedAt) } : {}),
-        },
+        update: { ...job, postedAt },
+        create: { ...job, postedAt },
       });
       saved++;
     }
