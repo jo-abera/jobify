@@ -7,6 +7,7 @@ import { login as loginApi } from '../api/auth.api';
 import { useAuth } from '../context/AuthContext';
 import { parseAuthResponse } from '../utils/authResponse';
 import GoogleOAuthButton from '../components/GoogleOAuthButton';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -99,12 +100,11 @@ export default function Login() {
                 Forgot password?
               </Link>
             </div>
-            <input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-blue-primary"
+              autoComplete="current-password"
             />
           </div>
           <button

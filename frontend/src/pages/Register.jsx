@@ -7,6 +7,7 @@ import { register as registerApi } from '../api/auth.api';
 import { useAuth } from '../context/AuthContext';
 import { parseAuthResponse } from '../utils/authResponse';
 import GoogleOAuthButton from '../components/GoogleOAuthButton';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -93,13 +94,13 @@ export default function Register() {
             <label className="block text-sm text-text-secondary mb-1">
               Password
             </label>
-            <input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-blue-primary"
+              autoComplete="new-password"
+              hint="At least 6 characters. Letters, numbers, symbols, and spaces are allowed."
             />
           </div>
           <button

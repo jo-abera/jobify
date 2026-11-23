@@ -17,6 +17,7 @@ import {
   uploadAvatar
 } from '../api/auth.api'
 import { useAuth } from '../context/AuthContext'
+import PasswordInput from '../components/PasswordInput'
 
 const JOB_TYPES = ['Full-time', 'Part-time', 'Internship', 'Contract']
 const WORK_MODES = ['Remote', 'On-site', 'Hybrid']
@@ -174,6 +175,9 @@ export default function Profile() {
       }
       if (security.password !== security.passwordConfirm) {
         throw new Error('New password and confirm password do not match.')
+      }
+      if (security.password.length < 6) {
+        throw new Error('Password must be at least 6 characters long.')
       }
       const res = await updatePassword({
         passwordCurrent: security.passwordCurrent,
@@ -513,29 +517,43 @@ export default function Profile() {
 
             <div>
               <label className="block text-sm text-text-secondary mb-1">Current password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={security.passwordCurrent}
-                onChange={(e) => setSecurity((prev) => ({ ...prev, passwordCurrent: e.target.value }))}
-                className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary"
+                onChange={(e) =>
+                  setSecurity((prev) => ({
+                    ...prev,
+                    passwordCurrent: e.target.value,
+                  }))
+                }
+                autoComplete="current-password"
+                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:border-blue-primary"
               />
             </div>
             <div>
               <label className="block text-sm text-text-secondary mb-1">New password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={security.password}
-                onChange={(e) => setSecurity((prev) => ({ ...prev, password: e.target.value }))}
-                className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary"
+                onChange={(e) =>
+                  setSecurity((prev) => ({ ...prev, password: e.target.value }))
+                }
+                minLength={6}
+                autoComplete="new-password"
+                hint="At least 6 characters. Letters, numbers, symbols, and spaces are allowed."
+                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:border-blue-primary"
               />
             </div>
             <div>
               <label className="block text-sm text-text-secondary mb-1">Confirm password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={security.passwordConfirm}
-                onChange={(e) => setSecurity((prev) => ({ ...prev, passwordConfirm: e.target.value }))}
-                className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary"
+                onChange={(e) =>
+                  setSecurity((prev) => ({
+                    ...prev,
+                    passwordConfirm: e.target.value,
+                  }))
+                }
+                autoComplete="new-password"
+                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:border-blue-primary"
               />
             </div>
 

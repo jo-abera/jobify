@@ -12,6 +12,7 @@ const bcrypt = require("bcrypt");
 const prisma = require("../config/db");
 const Email = require("../utils/email");
 const cloudinary = require("../utils/cloudinary");
+const { validatePassword } = require("../utils/passwordValidation");
 
 //const { OAuth2Client } = require("google-auth-library");
 // const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -87,13 +88,10 @@ exports.register = async (req, res) => {
         message: "Please provide name, email and password to register.",
       });
     }
-    // Password strength Validation: at least 6 characters, at least one letter and one number using regex
-    const strongPassword = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-    if (!strongPassword.test(password)) {
-      return res.status(400).json({
-        message:
-          "Password must be at least 6 characters long and contain at least one letter and one number.",
-      });
+    // Enforce shared password policy (min length only; spaces allowed).
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.valid) {
+      return res.status(400).json({ message: passwordCheck.message });
     }
 
     //  Check if the email is already in use. If it is, return an error
@@ -126,14 +124,14 @@ exports.register = async (req, res) => {
         const url = `${process.env.FRONTEND_URL || "http://localhost:5174"}/jobs`;
         await new Email(newUser, url).sendWelcome();
       } catch (emailErr) {
-        console.log("Welcome email faild:", emailErr.message);
+        console.log("Welcome email failed:", emailErr.message);
       }
     }
 
     signAndSend(newUser, 201, res);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Registration faild. Please try again." });
+    res.status(500).json({ message: "Registration failed. Please try again." });
   }
 };
 
@@ -310,6 +308,11 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Please provide a new password" });
     }
 
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.valid) {
+      return res.status(400).json({ message: passwordCheck.message });
+    }
+
     // Takes the token from the URL (req.params.token), hashes it, then looks up the matching hash in the DB
     // This is the token you get from the user's email. So you can verify it's valid and not expired.
     const hashedToken = crypto
@@ -373,6 +376,12 @@ exports.updatePassword = async (req, res) => {
         .status(401)
         .json({ message: "Your current password is wrong" });
     }
+
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.valid) {
+      return res.status(400).json({ message: passwordCheck.message });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const updated = await prisma.user.update({

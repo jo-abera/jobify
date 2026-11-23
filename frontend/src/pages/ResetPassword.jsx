@@ -7,6 +7,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { resetPassword } from '../api/auth.api';
 import { useAuth } from '../context/AuthContext';
 import { parseAuthResponse } from '../utils/authResponse';
+import PasswordInput from '../components/PasswordInput';
 
 export default function ResetPassword() {
   const { token } = useParams();
@@ -46,18 +47,18 @@ export default function ResetPassword() {
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit} class="space=y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-text-secondary mb-1">
               New password
             </label>
-            <input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full bg-bg-secondary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-blue-primary"
+              autoComplete="new-password"
+              hint="At least 6 characters. Letters, numbers, symbols, and spaces are allowed."
             />
           </div>
           <button
