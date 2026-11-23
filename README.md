@@ -4,6 +4,15 @@ Jobify is a full-stack job discovery and application tracking platform. It aggre
 
 [Jobify Website Live Demo](https://jobify-jo.vercel.app/)
 
+### Normal user login (demo)
+
+| | |
+|---|---|
+| **Email** | `joabera@gmail.com` |
+| **Password** | `12345Jo` |
+
+Sign in on the live site to browse jobs, save listings, and use the tracker.
+
 ### Admin login (demo)
 
 | | |
