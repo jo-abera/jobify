@@ -13,6 +13,8 @@ import { getSavedJobs } from '../api/tracker.api';
 import { useAuth } from '../context/AuthContext';
 import JobCard from '../components/JobCard';
 import JobFilter from '../components/JobFilter';
+import SectionHeading from '../components/SectionHeading';
+import JobPagination from '../components/JobPagination';
 
 const PAGE_SIZE = 15;
 
@@ -279,46 +281,54 @@ export default function Jobs() {
     }
   };
 
-  // Builds a compact page-number list, e.g. [1, 2, 3, '…', 9] for larger totals.
-  const getPageNumbers = () => {
-    const total = pagination.totalPages || 1;
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
-    const pages = [1];
-    if (page > 3) pages.push('…');
-    for (
-      let p = Math.max(2, page - 1);
-      p <= Math.min(total - 1, page + 1);
-      p++
-    ) {
-      pages.push(p);
-    }
-    if (page < total - 2) pages.push('…');
-    pages.push(total);
-    return pages;
-  };
-
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-text-primary mb-6">Browse Jobs</h1>
+    <div>
+      <section className="border-b border-border bg-bg-secondary/40">
+        <div className="max-w-6xl mx-auto px-4 py-10 md:py-12">
+          <SectionHeading
+            headingTag="h1"
+            className="mb-8"
+            overline="Job board"
+            title="Browse jobs"
+            description="Search by title or company, then narrow results with quick filters."
+            trailing={
+              !loading && pagination.total > 0 ? (
+                <p className="rounded-lg border border-border bg-bg-card px-4 py-2.5 text-sm font-semibold text-blue-text tabular-nums shrink-0">
+                  {pagination.total} {pagination.total === 1 ? 'role' : 'roles'}
+                </p>
+              ) : null
+            }
+          />
 
-      <form onSubmit={handleSearch} className="mb-4">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search jobs, companies..."
-          className="w-full max-w-md bg-bg-card border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-blue-primary"
-        />
-      </form>
+          <form
+            onSubmit={handleSearch}
+            className="hero-search-bar flex flex-col sm:flex-row gap-2 sm:gap-0 sm:p-1.5 bg-bg-card rounded-2xl max-w-2xl"
+          >
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search jobs, companies..."
+              className="flex-1 bg-bg-secondary sm:bg-transparent border border-border sm:border-0 rounded-xl sm:rounded-2xl px-4 py-3.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-0 focus:border-border-hover"
+            />
+            <button
+              type="submit"
+              className="btn-brand text-white px-6 py-3.5 rounded-xl font-semibold transition-all shrink-0"
+            >
+              Search
+            </button>
+          </form>
 
-      <div className="mb-6">
-        <JobFilter
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-        />
-      </div>
+          <div className="mt-8">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
+              Quick filters
+            </p>
+            <JobFilter activeFilter={activeFilter} onFilterChange={handleFilterChange} />
+          </div>
+        </div>
+      </section>
 
+      <div className="max-w-6xl mx-auto px-4 py-8">
       {user && hasPreferenceData && (
         <div className="mb-6 bg-bg-card border border-border rounded-card p-4 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -378,59 +388,13 @@ export default function Jobs() {
             ))}
           </div>
 
-          {pagination.totalPages > 1 && (
-            <div className="mt-8 flex flex-col items-center gap-2">
-              <p className="text-text-muted text-sm">
-                Showing page {pagination.page} of {pagination.totalPages} (
-                {pagination.total} jobs)
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={!pagination.hasPrev}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-2 rounded-lg text-sm font-medium border border-border text-text-secondary disabled:opacity-40 disabled:cursor-not-allowed hover:bg-bg-secondary"
-                >
-                  Prev
-                </button>
-
-                {getPageNumbers().map((p, idx) =>
-                  p === '…' ? (
-                    <span
-                      key={`ellipsis-${idx}`}
-                      className="px-2 text-text-muted"
-                    >
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setPage(p)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        p === pagination.page
-                          ? 'bg-blue-primary text-white'
-                          : 'border border-border text-text-secondary hover:bg-bg-secondary'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-
-                <button
-                  type="button"
-                  disabled={!pagination.hasNext}
-                  onClick={() => setPage((p) => p + 1)}
-                  className="px-3 py-2 rounded-lg text-sm font-medium border border-border text-text-secondary disabled:opacity-40 disabled:cursor-not-allowed hover:bg-bg-secondary"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          <JobPagination
+            pagination={pagination}
+            onPageChange={(p) => setPage(p)}
+          />
         </>
       )}
+      </div>
     </div>
   );
 }

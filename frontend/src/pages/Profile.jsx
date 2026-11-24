@@ -18,6 +18,9 @@ import {
 } from '../api/auth.api'
 import { useAuth } from '../context/AuthContext'
 import PasswordInput from '../components/PasswordInput'
+import SectionHeading from '../components/SectionHeading'
+import { ProfileLayoutFrame } from '../components/profile/ProfileShell'
+import ProfileAvatarField from '../components/profile/ProfileAvatarField'
 
 const JOB_TYPES = ['Full-time', 'Part-time', 'Internship', 'Contract']
 const WORK_MODES = ['Remote', 'On-site', 'Hybrid']
@@ -228,38 +231,23 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-text-primary mb-2">Profile & Settings</h1>
-      <p className="text-text-secondary mb-6">
-        Manage your career profile, job preferences, and account security.
-      </p>
+    <div>
+      <section className="border-b border-border bg-bg-secondary/40">
+        <div className="mx-auto max-w-4xl px-4 py-10 md:py-12">
+          <SectionHeading
+            headingTag="h1"
+            className="mb-0"
+            overline="Your account"
+            title="Profile & settings"
+            description="Manage your career profile, job preferences, and account security."
+          />
+        </div>
+      </section>
 
-      <div className="flex flex-wrap gap-2 mb-6">
-        <button
-          type="button"
-          onClick={() => setActiveTab('career')}
-          className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'career' ? 'bg-blue-primary text-white' : 'bg-bg-card border border-border text-text-secondary'}`}
-        >
-          Career Profile
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('preferences')}
-          className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'preferences' ? 'bg-blue-primary text-white' : 'bg-bg-card border border-border text-text-secondary'}`}
-        >
-          Job Preferences
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('security')}
-          className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'security' ? 'bg-blue-primary text-white' : 'bg-bg-card border border-border text-text-secondary'}`}
-        >
-          Account Security
-        </button>
-      </div>
-
-      {message && <p className="mb-4 text-green-400 text-sm">{message}</p>}
-      {error && <p className="mb-4 text-red-300 text-sm">{error}</p>}
+      <div className="mx-auto max-w-4xl px-4 py-8">
+      <ProfileLayoutFrame activeTab={activeTab} setActiveTab={setActiveTab}>
+      {message && <p className="mb-4 text-sm text-green-600 dark:text-green-400">{message}</p>}
+      {error && <p className="mb-4 text-sm text-red-300">{error}</p>}
 
       {activeTab === 'career' && (
         <form onSubmit={handleCareerSave} className="bg-bg-card border border-border rounded-card p-6 space-y-4">
@@ -268,78 +256,18 @@ export default function Profile() {
             These details personalize your account and improve matching quality.
           </p>
 
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Profile picture</label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-[84px_1fr] gap-4 items-start">
-              <div className="w-[84px] h-[84px] rounded-full bg-bg-secondary border border-border overflow-hidden flex items-center justify-center">
-                {career.avatar ? (
-                  <img src={career.avatar} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-text-muted text-xs">No photo</span>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <label
-                  className={`block w-full rounded-lg border border-dashed px-4 py-3 bg-bg-secondary hover:bg-bg-hover transition-colors cursor-pointer ${
-                    avatarUploading ? 'opacity-70 cursor-wait' : ''
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-text-primary font-medium text-sm">
-                        {avatarUploading ? 'Uploading...' : 'Upload an image'}
-                      </p>
-                      <p className="text-text-muted text-xs mt-0.5">
-                        PNG/JPG/WEBP • max 5 MB • updates immediately
-                      </p>
-                    </div>
-                    <span className="px-3 py-1.5 bg-blue-primary text-white text-xs font-semibold rounded-md shrink-0">
-                      Choose file
-                    </span>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={avatarUploading || loading}
-                    onChange={(e) => handleAvatarUpload(e.target.files?.[0])}
-                  />
-                </label>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setCareer((prev) => ({ ...prev, avatar: '' }))}
-                    className="px-3 py-2 rounded-lg text-sm bg-bg-secondary border border-border text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
-                  >
-                    Clear photo
-                  </button>
-                  <p className="text-xs text-text-muted self-center">
-                    Clearing only removes the URL value. Click “Save profile” to persist.
-                  </p>
-                </div>
-
-                <details className="bg-bg-secondary border border-border rounded-lg px-4 py-3">
-                  <summary className="cursor-pointer text-sm text-text-secondary select-none">
-                    Use an image URL instead (optional)
-                  </summary>
-                  <div className="mt-3">
-                    <input
-                      value={career.avatar}
-                      onChange={(e) => setCareer((prev) => ({ ...prev, avatar: e.target.value }))}
-                      placeholder="https://example.com/avatar.jpg"
-                      className="w-full bg-bg-card border border-border rounded-lg px-3 py-2 text-text-primary"
-                    />
-                    <p className="text-xs text-text-muted mt-2">
-                      Tip: use a direct image link ending in .png, .jpg, or .webp.
-                    </p>
-                  </div>
-                </details>
-              </div>
-            </div>
-          </div>
+          <fieldset className="min-w-0">
+            <legend className="mb-3 block text-sm font-medium text-text-secondary">Profile photo</legend>
+            <ProfileAvatarField
+              avatar={career.avatar}
+              name={career.name}
+              uploading={avatarUploading}
+              disabled={loading}
+              onUpload={handleAvatarUpload}
+              onClear={() => setCareer((prev) => ({ ...prev, avatar: '' }))}
+              onAvatarUrlChange={(url) => setCareer((prev) => ({ ...prev, avatar: url }))}
+            />
+          </fieldset>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -402,7 +330,7 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={addSkill}
-                className="px-4 py-2 bg-blue-primary text-white rounded-lg"
+                className="btn-brand rounded-xl px-4 py-2 font-semibold text-white"
               >
                 Add
               </button>
@@ -424,7 +352,7 @@ export default function Profile() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-primary hover:bg-blue-hover text-white px-6 py-2.5 rounded-lg font-medium disabled:opacity-50"
+            className="btn-brand rounded-xl px-6 py-2.5 font-semibold text-white disabled:opacity-50"
           >
             Save profile
           </button>
@@ -503,7 +431,7 @@ export default function Profile() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-primary hover:bg-blue-hover text-white px-6 py-2.5 rounded-lg font-medium disabled:opacity-50"
+            className="btn-brand rounded-xl px-6 py-2.5 font-semibold text-white disabled:opacity-50"
           >
             Save preferences
           </button>
@@ -526,7 +454,7 @@ export default function Profile() {
                   }))
                 }
                 autoComplete="current-password"
-                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:border-blue-primary"
+                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:ring-0 focus:border-border-hover"
               />
             </div>
             <div>
@@ -539,7 +467,7 @@ export default function Profile() {
                 minLength={6}
                 autoComplete="new-password"
                 hint="At least 6 characters. Letters, numbers, symbols, and spaces are allowed."
-                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:border-blue-primary"
+                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:ring-0 focus:border-border-hover"
               />
             </div>
             <div>
@@ -553,14 +481,14 @@ export default function Profile() {
                   }))
                 }
                 autoComplete="new-password"
-                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:border-blue-primary"
+                inputClassName="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 pr-10 text-text-primary focus:outline-none focus:ring-0 focus:border-border-hover"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-primary hover:bg-blue-hover text-white px-6 py-2.5 rounded-lg font-medium disabled:opacity-50"
+              className="btn-brand rounded-xl px-6 py-2.5 font-semibold text-white disabled:opacity-50"
             >
               Update password
             </button>
@@ -582,6 +510,8 @@ export default function Profile() {
           </div>
         </div>
       )}
+      </ProfileLayoutFrame>
+      </div>
     </div>
   )
 }

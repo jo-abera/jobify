@@ -1,5 +1,5 @@
 /**
- * Global styles and design tokens.
+ * Global styles and design tokens (NaPQIN-inspired palette + Outfit).
  *
  * CSS variables drive theming; Tailwind (tailwind.config.js) maps utility
  * classes like bg-bg-card to these vars. Toggle light mode via :root.light
@@ -12,56 +12,190 @@
 
 /* Dark mode (default) */
 :root {
-  --color-bg-primary: #0f0f0f;
-  --color-bg-secondary: #1a1a1a;
-  --color-bg-card: #1e1e1e;
-  --color-bg-hover: #252525;
-  --color-blue-primary: #2563eb;
-  --color-blue-hover: #1d4ed8;
-  --color-blue-light: #1e3a5f;
-  --color-blue-text: #60a5fa;
-  --color-text-primary: #f5f5f5;
-  --color-text-secondary: #a3a3a3;
-  --color-text-muted: #737373;
-  --color-border: #2a2a2a;
-  --color-border-hover: #3a3a3a;
+  --color-bg-primary: #0e1218;
+  --color-bg-secondary: #16161d;
+  --color-bg-card: #1c1f28;
+  --color-bg-hover: #252a35;
+  --color-blue-primary: #076682;
+  --color-blue-hover: #055566;
+  --color-blue-light: #1a3d4a;
+  --color-blue-text: #5eb8c9;
+  --color-text-primary: #f5fafb;
+  --color-text-secondary: #a8adb8;
+  --color-text-muted: #5b5f6e;
+  --color-border: #2a3038;
+  --color-border-hover: #3a424e;
   /* Tracker pipeline column accents */
-  --color-saved: #374151;
-  --color-applied: #1e3a5f;
+  --color-saved: #2a3038;
+  --color-applied: #1a3d4a;
   --color-interviewing: #3b2f00;
   --color-offered: #14532d;
   --color-rejected: #3b1a1a;
+  --color-hero-from: #044652;
+  --color-hero-mid: #076682;
+  --color-hero-to: #0a849e;
 }
 
 /* Light mode — activated when <html class="light"> */
 :root.light {
-  --color-bg-primary: #f8fafc;
+  --color-bg-primary: #f5fafb;
   --color-bg-secondary: #ffffff;
   --color-bg-card: #ffffff;
-  --color-bg-hover: #f1f5f9;
-  --color-blue-primary: #2563eb;
-  --color-blue-hover: #1d4ed8;
-  --color-blue-light: #dbeafe;
-  --color-blue-text: #2563eb;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
-  --color-border: #e2e8f0;
-  --color-border-hover: #cbd5e1;
-  --color-saved: #e2e8f0;
-  --color-applied: #dbeafe;
+  --color-bg-hover: #e8f3f6;
+  --color-blue-primary: #076682;
+  --color-blue-hover: #055566;
+  --color-blue-light: #e8f3f6;
+  --color-blue-text: #076682;
+  --color-text-primary: #16161d;
+  --color-text-secondary: #5b5f6e;
+  --color-text-muted: #8b8f9a;
+  --color-border: #e0ecef;
+  --color-border-hover: #c5d8de;
+  --color-saved: #e8f3f6;
+  --color-applied: #e8f3f6;
   --color-interviewing: #fef3c7;
   --color-offered: #dcfce7;
   --color-rejected: #fee2e2;
+  --color-hero-from: #044652;
+  --color-hero-mid: #076682;
+  --color-hero-to: #0a849e;
 }
 
 body {
   margin: 0;
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@layer components {
+  .hero-shell {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .hero-blob-a {
+    position: absolute;
+    width: min(36rem, 95vw);
+    height: min(36rem, 95vw);
+    right: -6rem;
+    top: -10rem;
+    border-radius: 9999px;
+    background: radial-gradient(
+      circle at 30% 30%,
+      rgba(94, 184, 201, 0.45),
+      rgba(7, 102, 130, 0.2) 45%,
+      transparent 72%
+    );
+    filter: blur(2px);
+  }
+
+  .hero-blob-b {
+    position: absolute;
+    width: min(28rem, 80vw);
+    height: min(28rem, 80vw);
+    left: -8rem;
+    bottom: -12rem;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(7, 102, 130, 0.22), transparent 68%);
+  }
+
+  :root.light .hero-blob-a {
+    background: radial-gradient(
+      circle at 30% 30%,
+      rgba(94, 184, 201, 0.55),
+      rgba(7, 102, 130, 0.12) 50%,
+      transparent 72%
+    );
+  }
+
+  .hero-product-mock {
+    transform: perspective(900px) rotateY(-6deg) rotateX(2deg);
+  }
+
+  @media (max-width: 1023px) {
+    .hero-product-mock {
+      transform: none;
+    }
+  }
+
+  .hero-search-bar {
+    box-shadow:
+      0 16px 40px rgba(22, 22, 29, 0.08),
+      0 0 0 1px var(--color-border);
+  }
+
+  :root:not(.light) .hero-search-bar {
+    box-shadow:
+      0 16px 40px rgba(0, 0, 0, 0.35),
+      0 0 0 1px var(--color-border);
+  }
+
+  .nav-link {
+    @apply relative inline-flex items-center whitespace-nowrap px-1 pb-2 pt-0.5 text-sm font-medium text-text-secondary transition-colors;
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    border-radius: 2px 2px 0 0;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+  }
+
+  .nav-link:hover:not(.nav-link-active) {
+    @apply text-text-primary;
+  }
+
+  .nav-link-active {
+    @apply font-semibold text-blue-text;
+  }
+
+  .nav-link-active::after {
+    background-color: var(--color-blue-primary);
+  }
+
+  .btn-brand {
+    background: linear-gradient(135deg, #5eb8c9 0%, #076682 52%, #055566 100%);
+  }
+
+  .btn-brand:hover {
+    filter: brightness(1.05);
+  }
+
+  .site-footer {
+    background-color: var(--color-bg-primary);
+  }
+
+  :root.light .site-footer {
+    background: linear-gradient(180deg, #f5fafb 0%, #eef6f8 55%, #e8f3f6 100%);
+  }
+
+  .file-drop-zone {
+    border-color: rgba(7, 102, 130, 0.35);
+    background-color: var(--color-bg-card);
+    cursor: pointer;
+  }
+
+  .file-drop-zone label {
+    cursor: pointer;
+  }
+
+  .file-drop-zone:hover {
+    border-color: rgba(7, 102, 130, 0.55);
+    background-color: var(--color-bg-hover);
+  }
+
+  .file-drop-zone.is-drag-over {
+    border-color: var(--color-blue-primary);
+    background-color: var(--color-blue-light);
+  }
 }
 
 /* @react-oauth/google iframe sizing for full-width button on auth pages */

@@ -10,6 +10,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import AuthCallback from './pages/AuthCallback';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Tracker from './pages/Tracker';
 import JobDetail from './pages/JobDetail';
@@ -23,9 +24,10 @@ function AppRoutes() {
   useKeepBackendWarm();
 
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <Routes>
+      <main className="flex-1">
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
@@ -66,8 +68,10 @@ function AppRoutes() {
             </AdminRoute>
           }
         />
-      </Routes>
-    </>
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 }
 

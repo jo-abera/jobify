@@ -10,6 +10,9 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif']
+      },
       colors: {
         'bg-primary': 'var(--color-bg-primary)',
         'bg-secondary': 'var(--color-bg-secondary)',
