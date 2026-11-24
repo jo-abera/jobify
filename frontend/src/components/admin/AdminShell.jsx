@@ -9,13 +9,13 @@ const TABS = [
 
 export function AdminTabNav({ tab, setTab }) {
   return (
-    <div className="mb-8 flex gap-1 rounded-2xl border border-border bg-bg-secondary p-1">
+    <div className="mb-8 flex flex-wrap gap-1 rounded-2xl border border-border bg-bg-secondary p-1">
       {TABS.map((t) => (
         <button
           key={t.id}
           type="button"
           onClick={() => setTab(t.id)}
-          className={`flex-1 rounded-xl px-3 py-2.5 text-center text-sm font-medium capitalize transition-all ${
+          className={`min-w-[calc(50%-0.25rem)] flex-1 rounded-xl px-3 py-2.5 text-center text-sm font-medium capitalize transition-all sm:min-w-0 ${
             tab === t.id
               ? 'bg-bg-card text-blue-text shadow-sm'
               : 'text-text-secondary hover:text-text-primary'

@@ -123,14 +123,15 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-bg-secondary">
       <div className="relative mx-auto max-w-6xl px-4">
-        <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <Link to="/" className="text-xl font-bold tracking-tight text-blue-text">
+        {/* Mobile: logo + actions on row 1, nav links on row 2 (avoids squeezing links off-screen). */}
+        <div className="grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-2 py-2 md:grid-cols-[1fr_auto_1fr] md:h-14 md:gap-2 md:py-0">
+          <Link
+            to="/"
+            className="col-start-1 row-start-1 shrink-0 text-xl font-bold tracking-tight text-blue-text"
+          >
             Jobify
           </Link>
-          <div className="justify-self-center">
-            <NavbarNav pathname={pathname} user={user} />
-          </div>
-          <div className="flex items-center justify-end gap-2.5">
+          <div className="col-start-2 row-start-1 flex items-center justify-end gap-2.5 md:col-start-3">
             {showThemeToggle && <ThemeToggle />}
             <NavActions
               user={user}
@@ -140,6 +141,9 @@ export default function Navbar() {
               setMenuOpen={setMenuOpen}
               onLogout={handleLogout}
             />
+          </div>
+          <div className="col-span-2 row-start-2 min-w-0 md:col-span-1 md:col-start-2 md:row-start-1 md:justify-self-center">
+            <NavbarNav pathname={pathname} user={user} />
           </div>
         </div>
       </div>

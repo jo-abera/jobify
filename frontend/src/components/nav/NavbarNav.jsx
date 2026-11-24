@@ -20,7 +20,7 @@ export function NavbarNav({ pathname, user }) {
   ];
 
   return (
-    <div className="flex items-center gap-4 sm:gap-6">
+    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:gap-x-6 md:flex-nowrap">
       {links.map(({ to, label }) => (
         <Link
           key={to}
