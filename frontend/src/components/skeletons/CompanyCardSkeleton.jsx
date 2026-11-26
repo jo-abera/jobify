@@ -1,14 +1,18 @@
 import Skeleton from './Skeleton';
 
-export function CompanyCardSkeleton() {
+const ROW_STAGGER = 0.08;
+
+export function CompanyCardSkeleton({ waveIndex = 0 }) {
+  const base = waveIndex * 0.12;
+
   return (
     <div
       className="h-full rounded-xl border border-border bg-bg-card p-4"
       aria-hidden
     >
-      <Skeleton className="h-4 w-full max-w-[180px]" />
-      <Skeleton className="mt-3 h-3 w-24" />
-      <Skeleton className="mt-4 h-3 w-32" />
+      <Skeleton className="h-4 w-full max-w-[180px]" delay={base} />
+      <Skeleton className="mt-3 h-3 w-24" delay={base + ROW_STAGGER} />
+      <Skeleton className="mt-4 h-3 w-32" delay={base + ROW_STAGGER * 2} />
     </div>
   );
 }
@@ -24,7 +28,7 @@ export default function CompanyCardSkeletonGrid({ count = 6, className = '' }) {
       <span className="sr-only">Loading companies</span>
       {Array.from({ length: count }, (_, i) => (
         <li key={i}>
-          <CompanyCardSkeleton />
+          <CompanyCardSkeleton waveIndex={i} />
         </li>
       ))}
     </ul>
