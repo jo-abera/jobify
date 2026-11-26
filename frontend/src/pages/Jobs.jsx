@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getJobs } from '../api/jobs.api';
+import { getJobs, getCategoryCounts } from '../api/jobs.api';
 import { getSavedJobs } from '../api/tracker.api';
 import { useAuth } from '../context/AuthContext';
 import JobCard from '../components/JobCard';
@@ -134,6 +134,9 @@ export default function Jobs() {
   const activeCategory = searchParams.get('category') || '';
   const [usePreferences, setUsePreferences] = useState(false);
   const [savedJobIds, setSavedJobIds] = useState([]);
+  const [categoryCounts, setCategoryCounts] = useState(null);
+  const [categoryTotal, setCategoryTotal] = useState(null);
+  const [loadingCategoryCounts, setLoadingCategoryCounts] = useState(false);
   const { user } = useAuth();
 
   const hasPreferenceData = Boolean(
@@ -194,6 +197,21 @@ export default function Jobs() {
     fetchJobs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams, page]);
+
+  useEffect(() => {
+    setLoadingCategoryCounts(true);
+    const params = apiParamsFromSearchParams(searchParams, { omitCategory: true });
+    getCategoryCounts(params)
+      .then((res) => {
+        setCategoryCounts(res.data?.byCategory ?? null);
+        setCategoryTotal(res.data?.total ?? null);
+      })
+      .catch(() => {
+        setCategoryCounts(null);
+        setCategoryTotal(null);
+      })
+      .finally(() => setLoadingCategoryCounts(false));
+  }, [searchParams]);
 
   useEffect(() => {
     fetchCatalogJobs();
@@ -349,6 +367,9 @@ export default function Jobs() {
           <JobCategoryFilter
             value={filterValues.category}
             onChange={handleCategoryChange}
+            countsByCategory={categoryCounts}
+            totalCount={categoryTotal}
+            loadingCounts={loadingCategoryCounts}
           />
           </div>
         </div>
@@ -392,6 +413,9 @@ export default function Jobs() {
               <JobCategoryFilter
                 value={filterValues.category}
                 onChange={handleCategoryChange}
+                countsByCategory={categoryCounts}
+                totalCount={categoryTotal}
+                loadingCounts={loadingCategoryCounts}
               />
             </div>
 

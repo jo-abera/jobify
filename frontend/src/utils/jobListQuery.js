@@ -10,12 +10,16 @@ export const JOB_FILTER_PARAM_KEYS = [
   'type',
 ];
 
-export function apiParamsFromSearchParams(searchParams, { page, limit } = {}) {
+export function apiParamsFromSearchParams(
+  searchParams,
+  { page, limit, omitCategory = false } = {}
+) {
   const params = {};
   if (page != null) params.page = page;
   if (limit != null) params.limit = limit;
 
   for (const key of JOB_FILTER_PARAM_KEYS) {
+    if (omitCategory && key === 'category') continue;
     const value = searchParams.get(key);
     if (value) params[key] = value;
   }

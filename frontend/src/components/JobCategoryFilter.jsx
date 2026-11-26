@@ -12,14 +12,39 @@ function chipClass(isActive) {
  * Category chips for quick filtering (Engineering, Sales, …).
  * value: '' = all categories, otherwise exact category name.
  */
+function chipLabel(name, count, isActive) {
+  if (count == null) return name;
+  return (
+    <>
+      {name}{' '}
+      <span
+        className={`tabular-nums text-xs font-bold ${
+          isActive
+            ? 'text-blue-text'
+            : 'text-text-primary'
+        }`}
+      >
+        ({count})
+      </span>
+    </>
+  );
+}
+
 export default function JobCategoryFilter({
   value = '',
   onChange,
   className = '',
   id = 'job-category-filter',
+  countsByCategory = null,
+  totalCount = null,
+  loadingCounts = false,
 }) {
   const allActive = !value;
   const mainCategories = JOB_CATEGORIES.filter((c) => c !== 'Other');
+  const countFor = (name) =>
+    countsByCategory && typeof countsByCategory[name] === 'number'
+      ? countsByCategory[name]
+      : null;
 
   return (
     <nav aria-label="Filter by job category" className={className}>
@@ -33,7 +58,9 @@ export default function JobCategoryFilter({
           className={chipClass(allActive)}
           aria-pressed={allActive}
         >
-          All
+          {loadingCounts && !countsByCategory
+            ? 'All'
+            : chipLabel('All', totalCount, allActive)}
         </button>
         {mainCategories.map((category) => {
           const isActive = value === category;
@@ -45,7 +72,7 @@ export default function JobCategoryFilter({
               className={chipClass(isActive)}
               aria-pressed={isActive}
             >
-              {category}
+              {chipLabel(category, countFor(category), isActive)}
             </button>
           );
         })}
@@ -55,7 +82,7 @@ export default function JobCategoryFilter({
           className={chipClass(value === 'Other')}
           aria-pressed={value === 'Other'}
         >
-          Other
+          {chipLabel('Other', countFor('Other'), value === 'Other')}
         </button>
       </div>
     </nav>

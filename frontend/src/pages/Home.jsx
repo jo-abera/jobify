@@ -6,7 +6,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getJobs, getStats } from '../api/jobs.api';
+import { getJobs, getStats, getCategoryCounts } from '../api/jobs.api';
 import JobCard from '../components/JobCard';
 import JobCategoryFilter from '../components/JobCategoryFilter';
 import HomeHero from '../components/HomeHero';
@@ -20,6 +20,8 @@ export default function () {
     companiesTracked: 0,
     jobSeekers: 0,
   });
+  const [categoryCounts, setCategoryCounts] = useState(null);
+  const [categoryTotal, setCategoryTotal] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,6 +30,12 @@ export default function () {
       .catch(() => {});
     getStats()
       .then((res) => setStats(res.data))
+      .catch(() => {});
+    getCategoryCounts()
+      .then((res) => {
+        setCategoryCounts(res.data?.byCategory ?? null);
+        setCategoryTotal(res.data?.total ?? null);
+      })
       .catch(() => {});
   }, []);
 
@@ -69,6 +77,8 @@ export default function () {
             value=""
             onChange={goToCategory}
             className="mb-8"
+            countsByCategory={categoryCounts}
+            totalCount={categoryTotal}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {latestJobs.map((job) => (

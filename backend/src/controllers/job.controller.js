@@ -65,6 +65,44 @@ exports.getFilterOptions = async (_req, res) => {
   }
 };
 
+/** Job counts per category; respects current filters except `category`. */
+exports.getCategoryCounts = async (req, res) => {
+  try {
+    const query = { ...req.query };
+    delete query.category;
+    delete query.page;
+    delete query.limit;
+
+    const where = buildJobListFilters(query);
+
+    const grouped = await prisma.job.groupBy({
+      by: ["category"],
+      where,
+      _count: { _all: true },
+    });
+
+    const byCategory = Object.fromEntries(
+      JOB_CATEGORIES.map((name) => [name, 0])
+    );
+    let total = 0;
+
+    for (const row of grouped) {
+      const count = row._count._all;
+      if (byCategory[row.category] !== undefined) {
+        byCategory[row.category] = count;
+      } else {
+        byCategory.Other = (byCategory.Other || 0) + count;
+      }
+      total += count;
+    }
+
+    res.json({ total, byCategory });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to load category counts" });
+  }
+};
+
 exports.getAllJobs = async (req, res) => {
   try {
     const { page = 1, limit = 15 } = req.query;
