@@ -1,3 +1,10 @@
+import { Link } from 'react-router-dom';
+import {
+  companyPathForJob,
+  jobHasCompanyPage,
+  resolveCompanyDisplayName,
+} from '../../utils/companySlug';
+
 export default function JobDetailHeader({
   job,
   user,
@@ -21,7 +28,25 @@ export default function JobDetailHeader({
             {job.title}
           </h1>
           <p className="mt-1 text-text-secondary">
-            {job.company} · {job.location}
+            {job.company ? (
+              <>
+                {jobHasCompanyPage(job) ? (
+                  <Link
+                    to={companyPathForJob(job)}
+                    className="font-medium text-blue-text hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {resolveCompanyDisplayName(job)}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-text-secondary">
+                    {resolveCompanyDisplayName(job)}
+                  </span>
+                )}
+                {' · '}
+              </>
+            ) : null}
+            {job.location}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="rounded bg-bg-secondary px-2.5 py-1 text-xs text-text-secondary">

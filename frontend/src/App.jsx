@@ -14,6 +14,8 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import Tracker from './pages/Tracker';
 import JobDetail from './pages/JobDetail';
+import Companies from './pages/Companies';
+import CompanyPage from './pages/CompanyPage';
 import Resume from './pages/Resume';
 import Profile from './pages/Profile';
 import AdminRoute from './components/AdminRoute';
@@ -31,6 +33,8 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
+        <Route path="/companies" element={<Companies />} />
+        <Route path="/companies/:slug" element={<CompanyPage />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

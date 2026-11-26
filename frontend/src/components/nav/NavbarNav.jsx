@@ -20,6 +20,7 @@ export function NavbarNav({ pathname, user }) {
 
   const links = [
     { to: '/jobs', label: 'Jobs' },
+    { to: '/companies', label: 'Companies' },
     ...(user
       ? AUTH_LINKS.filter((l) => !l.adminOnly || user.role === 'admin')
       : [{ to: '/login', label: 'Login' }]),
