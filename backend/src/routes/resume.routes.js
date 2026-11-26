@@ -7,6 +7,10 @@
  * POST /current       — save or replace the user's profile resume
  * DELETE /current     — remove saved resume
  * POST /score-stored  — score the saved profile resume for a jobId
+ * GET  /versions      — upload history
+ * GET  /versions/:id/file — stream a historical version
+ * POST /versions/:id/current — restore as current resume
+ * DELETE /versions/:id — delete one version from history
  */
 
 const router = require("express").Router();
@@ -31,5 +35,10 @@ router.post(
 );
 router.delete("/current", auth, resumeController.deleteCurrent);
 router.post("/score-stored", auth, resumeController.scoreStored);
+
+router.get("/versions", auth, resumeController.listVersions);
+router.get("/versions/:id/file", auth, resumeController.serveVersionFile);
+router.post("/versions/:id/current", auth, resumeController.setCurrentVersion);
+router.delete("/versions/:id", auth, resumeController.deleteVersion);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 /**
- * Persist user resume files until replaced.
+ * Persist user resume files (one object per version id).
  * Cloudinary when configured; otherwise local disk (dev fallback).
  */
 
@@ -17,41 +17,6 @@ function publicBaseUrl() {
   )
 }
 
-function clearLocalUserFiles(userId) {
-  if (!fs.existsSync(UPLOAD_DIR)) return
-  for (const name of fs.readdirSync(UPLOAD_DIR)) {
-    if (name === userId || name.startsWith(`${userId}.`)) {
-      fs.unlinkSync(path.join(UPLOAD_DIR, name))
-    }
-  }
-}
-
-/**
- * @param {Buffer} buffer
- * @param {string} userId
- * @param {string} originalName
- * @returns {Promise<string>} public URL for User.resumeUrl
- */
-async function saveResumeFile(buffer, userId, originalName) {
-  if (cloudinary.isConfigured()) {
-    return cloudinary.uploadResume(buffer, userId)
-  }
-
-  console.warn(
-    '[resume] Cloudinary not configured — storing on local disk (dev only)'
-  )
-
-  const ext =
-    originalnameExtension(originalName) || 'pdf'
-  if (!fs.existsSync(UPLOAD_DIR)) {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true })
-  }
-  clearLocalUserFiles(userId)
-  const fileName = `${userId}.${ext}`
-  fs.writeFileSync(path.join(UPLOAD_DIR, fileName), buffer)
-  return `${publicBaseUrl()}/uploads/resumes/${fileName}`
-}
-
 function originalnameExtension(originalName) {
   const base = String(originalName || '').toLowerCase()
   const ext = base.split('.').pop()
@@ -60,9 +25,55 @@ function originalnameExtension(originalName) {
 }
 
 /**
- * @param {string} userId
- * @param {string|null} resumeUrl
+ * @param {Buffer} buffer
+ * @param {string} storageKey - ResumeVersion.id
+ * @param {string} originalName
+ * @returns {Promise<string>} public URL
  */
+async function saveResumeFile(buffer, storageKey, originalName) {
+  if (cloudinary.isConfigured()) {
+    return cloudinary.uploadResume(buffer, storageKey)
+  }
+
+  console.warn(
+    '[resume] Cloudinary not configured — storing on local disk (dev only)'
+  )
+
+  const ext = originalnameExtension(originalName) || 'pdf'
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true })
+  }
+  const fileName = `${storageKey}.${ext}`
+  fs.writeFileSync(path.join(UPLOAD_DIR, fileName), buffer)
+  return `${publicBaseUrl()}/uploads/resumes/${fileName}`
+}
+
+/**
+ * Delete stored object for one version (ignore missing).
+ * @param {string} storageKey
+ */
+async function removeResumeFileByKey(storageKey, resumeUrl) {
+  if (!storageKey && !resumeUrl) return
+
+  if (cloudinary.isConfigured() && resumeUrl?.includes('res.cloudinary.com')) {
+    try {
+      await cloudinary.destroyResume(storageKey)
+    } catch (err) {
+      console.warn('[resume] Cloudinary delete failed:', err.message)
+    }
+    return
+  }
+
+  if (resumeUrl?.includes('/uploads/resumes/')) {
+    const ext = originalnameExtension(resumeUrl) || 'pdf'
+    const diskPath = path.join(UPLOAD_DIR, `${storageKey}.${ext}`)
+    if (fs.existsSync(diskPath)) {
+      fs.unlinkSync(diskPath)
+    }
+  }
+}
+
+/** @deprecated Use removeResumeFileByKey — legacy single-file layout */
 async function removeResumeFile(userId, resumeUrl) {
   if (!resumeUrl) return
 
@@ -75,17 +86,15 @@ async function removeResumeFile(userId, resumeUrl) {
     return
   }
 
-  if (resumeUrl.includes('/uploads/resumes/')) {
-    clearLocalUserFiles(userId)
+  if (resumeUrl.includes('/uploads/resumes/') && fs.existsSync(UPLOAD_DIR)) {
+    for (const name of fs.readdirSync(UPLOAD_DIR)) {
+      if (name === userId || name.startsWith(`${userId}.`)) {
+        fs.unlinkSync(path.join(UPLOAD_DIR, name))
+      }
+    }
   }
 }
 
-/**
- * @param {string} resumeUrl
- * @param {string|null} mimeType
- * @param {string|null} fileName
- * @returns {Promise<Buffer>}
- */
 async function fetchResumeBuffer(resumeUrl, mimeType, fileName) {
   if (!resumeUrl) {
     const err = new Error('No resume on file')
@@ -111,6 +120,7 @@ async function fetchResumeBuffer(resumeUrl, mimeType, fileName) {
 module.exports = {
   saveResumeFile,
   removeResumeFile,
+  removeResumeFileByKey,
   fetchResumeBuffer,
   UPLOAD_DIR,
 }

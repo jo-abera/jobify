@@ -46,9 +46,22 @@ export function fetchCurrentResumeFile(disposition = 'inline') {
   });
 }
 
-export async function openCurrentResume() {
-  // Open the tab synchronously (user click). Do not pass "noopener" here — it makes
-  // window.open return null, so we cannot navigate the new tab after the fetch.
+export function fetchResumeVersionFile(versionId, disposition = 'inline') {
+  return api.get(`/api/resume/versions/${versionId}/file`, {
+    params: { disposition },
+    responseType: 'blob',
+  });
+}
+
+export const listResumeVersions = () => api.get('/api/resume/versions');
+
+export const setResumeVersionCurrent = (versionId) =>
+  api.post(`/api/resume/versions/${versionId}/current`);
+
+export const deleteResumeVersion = (versionId) =>
+  api.delete(`/api/resume/versions/${versionId}`);
+
+async function openBlobInNewTab(fetchBlob) {
   const popup = window.open('about:blank', '_blank');
   if (!popup) {
     const blocked = new Error(
@@ -63,11 +76,11 @@ export async function openCurrentResume() {
     popup.document.body.innerHTML =
       '<p style="font-family:system-ui,sans-serif;padding:1.5rem;color:#444">Loading resume…</p>';
   } catch {
-    /* cross-origin once navigated — ignore */
+    /* ignore */
   }
 
   try {
-    const res = await fetchCurrentResumeFile('inline');
+    const res = await fetchBlob();
     const type =
       res.headers['content-type']?.split(';')[0]?.trim() || 'application/pdf';
     const url = URL.createObjectURL(new Blob([res.data], { type }));
@@ -79,8 +92,8 @@ export async function openCurrentResume() {
   }
 }
 
-export async function downloadCurrentResume(fileName) {
-  const res = await fetchCurrentResumeFile('attachment');
+async function downloadBlob(fetchBlob, fileName) {
+  const res = await fetchBlob();
   const type =
     res.headers['content-type']?.split(';')[0]?.trim() || 'application/octet-stream';
   const url = URL.createObjectURL(new Blob([res.data], { type }));
@@ -92,4 +105,20 @@ export async function downloadCurrentResume(fileName) {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+}
+
+export async function openCurrentResume() {
+  return openBlobInNewTab(() => fetchCurrentResumeFile('inline'));
+}
+
+export async function downloadCurrentResume(fileName) {
+  return downloadBlob(() => fetchCurrentResumeFile('attachment'), fileName);
+}
+
+export async function openResumeVersion(versionId) {
+  return openBlobInNewTab(() => fetchResumeVersionFile(versionId, 'inline'));
+}
+
+export async function downloadResumeVersion(versionId, fileName) {
+  return downloadBlob(() => fetchResumeVersionFile(versionId, 'attachment'), fileName);
 }

@@ -35,6 +35,19 @@ model User {
   resumeUploadedAt     DateTime?
   createdAt            DateTime   @default(now())
   savedJobs            SavedJob[]
+  resumeVersions       ResumeVersion[]
+}
+
+model ResumeVersion {
+  id             String   @id @default(uuid())
+  userId         String
+  resumeUrl      String
+  resumeFileName String
+  resumeMimeType String?
+  uploadedAt     DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, uploadedAt(sort: Desc)])
 }
 
 model Job {

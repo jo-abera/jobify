@@ -9,9 +9,11 @@ import { useAuth } from '../../context/AuthContext';
 import SplitResumeLayout from '../resume/ResumeScorerLayouts';
 import ProfileCurrentResume from './ProfileCurrentResume';
 import ProfileResumeStorage from './ProfileResumeStorage';
+import ProfileResumeVersionHistory from './ProfileResumeVersionHistory';
 
 export default function ProfileResumePanel() {
   const { user } = useAuth();
+  const [historyRefresh, setHistoryRefresh] = useState(0);
   const hasSavedResume = Boolean(user?.resumeUrl && user?.resumeFileName);
   const [inputMode, setInputMode] = useState('upload');
   const [resume, setResume] = useState('');
@@ -123,7 +125,9 @@ export default function ProfileResumePanel() {
 
       <ProfileCurrentResume />
 
-      <ProfileResumeStorage />
+      <ProfileResumeStorage onUpdated={() => setHistoryRefresh((n) => n + 1)} />
+
+      <ProfileResumeVersionHistory refreshKey={historyRefresh} />
 
       <SplitResumeLayout {...fieldProps} onSubmit={handleScore} />
 

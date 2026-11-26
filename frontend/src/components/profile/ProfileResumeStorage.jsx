@@ -3,7 +3,7 @@ import FileDropZone from '../FileDropZone';
 import { RESUME_FILE_ACCEPT } from '../resume/ResumeScorerFields';
 import { uploadCurrentResume, deleteCurrentResume } from '../../api/resume.api';
 import { useAuth } from '../../context/AuthContext';
-export default function ProfileResumeStorage() {
+export default function ProfileResumeStorage({ onUpdated }) {
   const { user, login } = useAuth();
   const [pendingFile, setPendingFile] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -31,8 +31,10 @@ export default function ProfileResumeStorage() {
       syncUser(res.data.data.user);
       setPendingFile(null);
       setMessage('Current resume updated on your profile.');
+      onUpdated?.();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save resume.');
+      const msg = err.response?.data?.message || err.response?.data?.detail;
+      setError(msg || 'Failed to save resume.');
     } finally {
       setSaving(false);
     }
@@ -47,7 +49,8 @@ export default function ProfileResumeStorage() {
       const res = await deleteCurrentResume();
       syncUser(res.data.data.user);
       setPendingFile(null);
-      setMessage('Current resume removed.');
+      setMessage('Current resume cleared (versions stay in history).');
+      onUpdated?.();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to remove resume.');
     } finally {

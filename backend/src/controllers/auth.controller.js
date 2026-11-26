@@ -598,11 +598,19 @@ exports.uploadAvatar = async (req, res) => {
 
 exports.deleteAccount = async (req, res) => {
   try {
+    const versions = await prisma.resumeVersion.findMany({
+      where: { userId: req.user.id },
+      select: { id: true, resumeUrl: true },
+    });
+    for (const version of versions) {
+      await resumeStorage.removeResumeFileByKey(version.id, version.resumeUrl);
+    }
+    await prisma.resumeVersion.deleteMany({ where: { userId: req.user.id } });
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: { resumeUrl: true },
     });
-    if (user?.resumeUrl) {
+    if (user?.resumeUrl && versions.length === 0) {
       await resumeStorage.removeResumeFile(req.user.id, user.resumeUrl);
     }
     await prisma.savedJob.deleteMany({ where: { userId: req.user.id } });

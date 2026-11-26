@@ -53,19 +53,18 @@ function uploadAvatar(buffer, userId) {
 }
 
 /**
- * Upload resume file (PDF/DOCX/TXT). One file per user — replaced on re-upload.
+ * Upload one resume version (unique storage key per version).
  * @returns {Promise<string>} secure_url
  */
-function uploadResume(buffer, userId) {
+function uploadResume(buffer, storageKey) {
   ensureConfigured()
 
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: 'jobify/resumes',
-        public_id: userId,
-        overwrite: true,
-        invalidate: true,
+        public_id: storageKey,
+        overwrite: false,
         resource_type: 'raw',
       },
       (error, result) => {
@@ -77,9 +76,9 @@ function uploadResume(buffer, userId) {
   })
 }
 
-function destroyResume(userId) {
+function destroyResume(storageKey) {
   ensureConfigured()
-  return cloudinary.uploader.destroy(`jobify/resumes/${userId}`, {
+  return cloudinary.uploader.destroy(`jobify/resumes/${storageKey}`, {
     resource_type: 'raw',
     invalidate: true,
   })
