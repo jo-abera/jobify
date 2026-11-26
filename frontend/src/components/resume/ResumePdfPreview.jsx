@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { isResumePdf } from '../../utils/resumePreview';
+import {
+  isResumePdf,
+  messageFromBlobError,
+  responseLooksLikePdf,
+} from '../../utils/resumePreview';
 
 /**
  * Inline PDF preview via object URL (local File or fetched blob).
@@ -9,6 +13,8 @@ export default function ResumePdfPreview({
   title = 'Preview',
   file = null,
   loadBlob = null,
+  fileNameHint = '',
+  mimeHint = '',
   refreshKey = '',
   className = '',
   compact = false,
@@ -48,17 +54,26 @@ export default function ResumePdfPreview({
         }
         if (loadBlob) {
           const res = await loadBlob();
-          const type =
-            res.headers['content-type']?.split(';')[0]?.trim() || 'application/pdf';
-          if (!type.includes('pdf')) {
+          const headerType =
+            res.headers['content-type']?.split(';')[0]?.trim() || mimeHint || '';
+          if (
+            !responseLooksLikePdf(headerType, fileNameHint) &&
+            !responseLooksLikePdf(mimeHint, fileNameHint)
+          ) {
             if (!cancelled) setError('Preview is only available for PDF files.');
             return;
           }
-          objectUrl = URL.createObjectURL(new Blob([res.data], { type }));
+          const blobType = headerType.includes('pdf')
+            ? headerType
+            : 'application/pdf';
+          objectUrl = URL.createObjectURL(new Blob([res.data], { type: blobType }));
           if (!cancelled) setSrc(objectUrl);
         }
-      } catch {
-        if (!cancelled) setError('Could not load PDF preview.');
+      } catch (err) {
+        const detail = await messageFromBlobError(err);
+        if (!cancelled) {
+          setError(detail || 'Could not load PDF preview.');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -70,7 +85,7 @@ export default function ResumePdfPreview({
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [file, loadBlob, refreshKey, isPdf]);
+  }, [file, loadBlob, refreshKey, isPdf, fileNameHint, mimeHint]);
 
   useEffect(() => {
     if (!expanded) return undefined;

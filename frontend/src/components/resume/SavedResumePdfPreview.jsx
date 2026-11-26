@@ -55,6 +55,8 @@ export default function SavedResumePdfPreview({
     <ResumePdfPreview
       title={title}
       loadBlob={loadBlob}
+      fileNameHint={user.resumeFileName}
+      mimeHint={user.resumeMimeType}
       refreshKey={`${user.resumeUrl}|${user.resumeUploadedAt}`}
       compact={compact}
       className={className}

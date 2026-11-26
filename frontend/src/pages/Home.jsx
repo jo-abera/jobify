@@ -11,6 +11,7 @@ import JobCard from '../components/JobCard';
 import JobCategoryFilter from '../components/JobCategoryFilter';
 import HomeHero from '../components/HomeHero';
 import SectionHeading from '../components/SectionHeading';
+import RecentlyViewedJobs from '../components/RecentlyViewedJobs';
 
 export default function () {
   const [search, setSearch] = useState('');
@@ -60,6 +61,12 @@ export default function () {
         onSubmit={handleSearch}
         stats={stats}
       />
+
+      <section className="border-t border-border bg-bg-primary">
+        <div className="max-w-6xl mx-auto px-4 py-12">
+          <RecentlyViewedJobs className="mb-14" />
+        </div>
+      </section>
 
       <section className="border-t border-border bg-bg-secondary/40">
         <div className="max-w-6xl mx-auto px-4 py-12 pb-20">

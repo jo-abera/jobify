@@ -131,13 +131,19 @@ async function fetchResumeBuffer(resumeUrl, mimeType, fileName) {
   }
 
   if (resumeUrl.startsWith('http://') || resumeUrl.startsWith('https://')) {
-    const res = await fetch(resumeUrl)
+    const res = await fetch(resumeUrl, { redirect: 'follow' });
     if (!res.ok) {
-      const err = new Error('Could not load saved resume file')
-      err.statusCode = 502
-      throw err
+      const err = new Error('Could not load saved resume file');
+      err.statusCode = 502;
+      throw err;
     }
-    return Buffer.from(await res.arrayBuffer())
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length === 0) {
+      const err = new Error('Saved resume file is empty');
+      err.statusCode = 502;
+      throw err;
+    }
+    return buf;
   }
 
   const err = new Error('Unsupported resume storage URL')

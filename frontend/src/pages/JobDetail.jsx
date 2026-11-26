@@ -13,6 +13,7 @@ import { scoreResume, scoreResumeFile } from '../api/resume.api';
 import { useAuth } from '../context/AuthContext';
 import JobDetailResumeMatch from '../components/job/JobDetailResumeMatch';
 import { SplitJobDetailLayout } from '../components/job/JobDetailLayouts';
+import { recordJobView } from '../utils/recentlyViewedJobs';
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -30,7 +31,10 @@ export default function JobDetail() {
 
   useEffect(() => {
     getJobById(id)
-      .then((res) => setJob(res.data))
+      .then((res) => {
+        setJob(res.data);
+        recordJobView(res.data.id);
+      })
       .catch(() => setJob(null))
       .finally(() => setLoading(false));
   }, [id]);
