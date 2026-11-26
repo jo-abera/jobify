@@ -8,7 +8,8 @@
 const prisma = require("../config/db");
 const { scrapeJobs } = require("../scraper");
 const { extractResumeText } = require('../utils/resumeParser');
-const { normalizeJobCategory } = require("../constants/jobCategories");
+const { normalizeJobCategory, isValidJobCategory } = require("../constants/jobCategories");
+const { inferJobCategory } = require("../utils/jobCategoryClassifier");
 
 
 /** Build calandar-day buckets for the last 7 days (charts) */
@@ -146,7 +147,10 @@ exports.createJob = async (req, res) => {
         url,
         description,
         type: type || "Full-time",
-        category: normalizeJobCategory(category),
+        category:
+          category && isValidJobCategory(category)
+            ? normalizeJobCategory(category)
+            : inferJobCategory({ title, description, sourceCategory: category }),
         source: "manual",
       },
     });

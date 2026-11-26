@@ -1,7 +1,10 @@
 /**
  * Save or update a scraped job without creating Josad-style duplicates.
+ *
+ * Category: parsers may set `sourceCategory` from the post (Category:, Department:, …).
+ * `inferJobCategory` uses that label when valid, else keyword rules on title + description,
+ * then persists `category` on Job.
  */
-
 const prisma = require("../config/db");
 const {
   normalizeJobUrl,
@@ -21,7 +24,7 @@ const jobFields = (parsed, postedAt) => ({
   category: inferJobCategory({
     title: parsed.title,
     description: parsed.description,
-    sourceCategory: parsed.category,
+    sourceCategory: parsed.sourceCategory || parsed.category || '',
   }),
   postedAt,
 });

@@ -1,5 +1,10 @@
 /**
- * Infer job category from title + description (and optional source label).
+ * Infer job category for scraped / manual jobs.
+ *
+ * Priority:
+ * 1. Source label from the post (canonical name or alias, e.g. Category: IT)
+ * 2. Keyword / regex on title + description
+ * 3. Other
  */
 
 const {
@@ -208,6 +213,26 @@ function mapSourceCategoryLabel(raw) {
   };
 
   if (aliases[label]) return aliases[label];
+
+  const byPhrase = [
+    ['software', 'Engineering'],
+    ['information technology', 'Engineering'],
+    ['customer service', 'Support'],
+    ['human resource', 'Human Resources'],
+    ['business development', 'Sales'],
+  ];
+  for (const [phrase, category] of byPhrase) {
+    if (label.includes(phrase)) return category;
+  }
+
+  for (const [key, category] of Object.entries(aliases)) {
+    if (key.length <= 3) {
+      if (new RegExp(`\\b${key}\\b`, 'i').test(label)) return category;
+    } else if (label.includes(key)) {
+      return category;
+    }
+  }
+
   return isValidJobCategory(raw) ? normalizeJobCategory(raw) : null;
 }
 
