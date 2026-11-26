@@ -1,11 +1,11 @@
 /** Keep in sync with backend/src/constants/trackerStages.js */
 
 export const TRACKER_STAGES = [
-  { id: 'saved', label: 'Saved' },
-  { id: 'applied', label: 'Applied' },
-  { id: 'interview', label: 'Interview' },
-  { id: 'offer', label: 'Offer' },
-  { id: 'rejected', label: 'Rejected' },
+  { id: 'saved', label: 'Saved', dotClass: 'bg-slate-400' },
+  { id: 'applied', label: 'Applied', dotClass: 'bg-blue-primary' },
+  { id: 'interview', label: 'Interview', dotClass: 'bg-violet-500' },
+  { id: 'offer', label: 'Offer', dotClass: 'bg-emerald-500' },
+  { id: 'rejected', label: 'Rejected', dotClass: 'bg-red-400' },
 ];
 
 const LEGACY_STATUS = {
