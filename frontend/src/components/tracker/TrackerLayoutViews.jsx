@@ -1,4 +1,5 @@
 import TrackerJobCard from './TrackerJobCard';
+import EmptyState from '../EmptyState';
 import { TRACKER_STAGES } from '../../constants/trackerStages';
 
 export function TrackerStatsBar({ stats }) {
@@ -76,9 +77,20 @@ export function KanbanLayout({
                 </div>
                 <div className="flex-1 space-y-3 overflow-y-auto pr-0.5 [scrollbar-width:thin]">
                   {jobs.length === 0 ? (
-                    <p className="py-12 text-center text-xs leading-relaxed text-text-muted">
-                      No jobs here yet.
-                    </p>
+                    <EmptyState
+                      compact
+                      icon="＋"
+                      title={
+                        col.id === 'saved'
+                          ? 'Nothing saved yet'
+                          : `No ${col.label.toLowerCase()} roles`
+                      }
+                      description={
+                        col.id === 'saved'
+                          ? 'Save jobs from the board to track them here.'
+                          : `Move a card from an earlier stage when you’re ready.`
+                      }
+                    />
                   ) : (
                     jobs.map((saved) => (
                       <TrackerJobCard

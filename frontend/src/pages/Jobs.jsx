@@ -1,13 +1,14 @@
 /**
  * Job browse page with search and filters.
  *
- * URL search params (?search=) sync with the search input. JobFilter drives
- * type/location query params on GET /api/jobs. Logged-in users load saved
+ * URL search params (?search=) sync with the search input; last-used filters
+ * are restored from localStorage when you open /jobs with no query string.
+ * JobFilter drives type/location query params on GET /api/jobs. Logged-in users load saved
  * job IDs to show Save state on JobCard.
  */
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getJobs, getCategoryCounts } from '../api/jobs.api';
 import { getSavedJobs } from '../api/tracker.api';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +18,8 @@ import JobCategoryFilter from '../components/JobCategoryFilter';
 import JobFiltersPanel from '../components/JobFiltersPanel';
 import SectionHeading from '../components/SectionHeading';
 import RecentlyViewedJobs from '../components/RecentlyViewedJobs';
+import EmptyState from '../components/EmptyState';
+import JobCardSkeletonGrid from '../components/skeletons/JobCardSkeleton';
 import JobPagination from '../components/JobPagination';
 import {
   apiParamsFromSearchParams,
@@ -24,6 +27,12 @@ import {
   clearFilterParams,
   JOB_FILTER_PARAM_KEYS,
 } from '../utils/jobListQuery';
+import {
+  hasActiveFilterParams,
+  readStoredJobFilters,
+  writeStoredJobFilters,
+  searchParamsFromStored,
+} from '../utils/jobFilterStorage';
 
 const PAGE_SIZE = 15;
 
@@ -118,6 +127,7 @@ function scoreJobForUser(job, user) {
 
 export default function Jobs() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const filtersHydrated = useRef(false);
   const [jobs, setJobs] = useState([]);
   const [pagination, setPagination] = useState({
     total: 0,
@@ -183,6 +193,27 @@ export default function Jobs() {
       .then((res) => setCatalogJobs(normalizeJobsPayload(res.data)))
       .catch(() => setCatalogJobs([]));
   };
+
+  useEffect(() => {
+    if (filtersHydrated.current) {
+      writeStoredJobFilters(searchParams);
+      return;
+    }
+    filtersHydrated.current = true;
+
+    if (hasActiveFilterParams(searchParams)) {
+      writeStoredJobFilters(searchParams);
+      return;
+    }
+
+    const stored = readStoredJobFilters();
+    if (stored && Object.keys(stored).length > 0) {
+      setSearchParams(searchParamsFromStored(stored), { replace: true });
+      return;
+    }
+
+    writeStoredJobFilters(searchParams);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
@@ -306,6 +337,18 @@ export default function Jobs() {
   const hasActiveFilters = JOB_FILTER_PARAM_KEYS.some(
     (key) => key !== 'search' && Boolean(searchParams.get(key))
   );
+  const hasSearchQuery = Boolean(searchParams.get('search')?.trim());
+  const preferenceFilteredEmpty =
+    !loading &&
+    jobsToRender.length === 0 &&
+    jobs.length > 0 &&
+    usePreferences &&
+    hasPreferenceData;
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setSearchParams(clearFilterParams(searchParams, []));
+  };
 
   return (
     <div>
@@ -473,9 +516,51 @@ export default function Jobs() {
       )}
 
       {loading ? (
-        <p className="text-text-muted text-center py-12">Loading jobs...</p>
+        <JobCardSkeletonGrid count={6} />
       ) : jobsToRender.length === 0 ? (
-        <p className="text-text-muted text-center py-12">No jobs found.</p>
+        <EmptyState
+          icon="🔍"
+          title={
+            preferenceFilteredEmpty
+              ? 'No roles match your preferences on this page'
+              : hasSearchQuery || hasActiveFilters
+                ? 'No jobs match your filters'
+                : 'No jobs to show right now'
+          }
+          description={
+            preferenceFilteredEmpty
+              ? 'Turn off “Use my profile preferences” or adjust filters to see more listings.'
+              : hasSearchQuery || hasActiveFilters
+                ? 'Try different keywords, clear some filters, or browse all open roles.'
+                : 'Check back soon — new listings are added as they are scraped.'
+          }
+        >
+          {preferenceFilteredEmpty ? (
+            <button
+              type="button"
+              onClick={() => setUsePreferences(false)}
+              className="rounded-xl border border-blue-primary bg-blue-primary/10 px-4 py-2 text-sm font-medium text-blue-text hover:bg-blue-primary/20"
+            >
+              Show all on this page
+            </button>
+          ) : null}
+          {hasSearchQuery || hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="rounded-xl border border-border bg-bg-card px-4 py-2 text-sm font-medium text-text-primary hover:bg-bg-hover"
+            >
+              Clear all filters
+            </button>
+          ) : (
+            <Link
+              to="/"
+              className="rounded-xl border border-border bg-bg-card px-4 py-2 text-sm font-medium text-text-primary hover:bg-bg-hover"
+            >
+              Back to home
+            </Link>
+          )}
+        </EmptyState>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

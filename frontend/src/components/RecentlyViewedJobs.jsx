@@ -4,6 +4,7 @@ import { getJobsByIds } from '../api/jobs.api';
 import { getSavedJobs } from '../api/tracker.api';
 import { useAuth } from '../context/AuthContext';
 import JobCard from './JobCard';
+import JobCardSkeletonGrid from './skeletons/JobCardSkeleton';
 import {
   clearRecentlyViewed,
   getRecentlyViewedIds,
@@ -88,7 +89,7 @@ export default function RecentlyViewedJobs({
       </div>
 
       {loading ? (
-        <p className="text-sm text-text-muted py-4">Loading recent jobs…</p>
+        <JobCardSkeletonGrid count={compact ? 2 : 3} />
       ) : (
         <div className={gridClass}>
           {jobs.map((job) => (

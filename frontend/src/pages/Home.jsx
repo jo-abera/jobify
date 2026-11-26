@@ -12,6 +12,8 @@ import JobCategoryFilter from '../components/JobCategoryFilter';
 import HomeHero from '../components/HomeHero';
 import SectionHeading from '../components/SectionHeading';
 import RecentlyViewedJobs from '../components/RecentlyViewedJobs';
+import EmptyState from '../components/EmptyState';
+import JobCardSkeletonGrid from '../components/skeletons/JobCardSkeleton';
 
 export default function () {
   const [search, setSearch] = useState('');
@@ -23,12 +25,15 @@ export default function () {
   });
   const [categoryCounts, setCategoryCounts] = useState(null);
   const [categoryTotal, setCategoryTotal] = useState(null);
+  const [loadingLatest, setLoadingLatest] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    setLoadingLatest(true);
     getJobs()
       .then((res) => setLatestJobs(res.data.jobs.slice(0, 15)))
-      .catch(() => {});
+      .catch(() => setLatestJobs([]))
+      .finally(() => setLoadingLatest(false));
     getStats()
       .then((res) => setStats(res.data))
       .catch(() => {});
@@ -87,16 +92,30 @@ export default function () {
             countsByCategory={categoryCounts}
             totalCount={categoryTotal}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {latestJobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
+          {loadingLatest ? (
+            <JobCardSkeletonGrid count={6} />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {latestJobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+          )}
 
-          {latestJobs.length === 0 && (
-            <p className="text-text-muted text-center py-12">
-              No jobs yet. Run the seed script to add sample data.
-            </p>
+          {!loadingLatest && latestJobs.length === 0 && (
+            <EmptyState
+              icon="📋"
+              title="No jobs listed yet"
+              description="When the scraper runs or jobs are added, the latest openings will appear here."
+            >
+              <button
+                type="button"
+                onClick={() => navigate('/jobs')}
+                className="rounded-xl border border-blue-primary bg-blue-primary/10 px-4 py-2 text-sm font-medium text-blue-text hover:bg-blue-primary/20"
+              >
+                Browse jobs
+              </button>
+            </EmptyState>
           )}
         </div>
       </section>

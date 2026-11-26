@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listCompanies } from '../api/companies.api';
 import SectionHeading from '../components/SectionHeading';
+import EmptyState from '../components/EmptyState';
+import CompanyCardSkeletonGrid from '../components/skeletons/CompanyCardSkeleton';
 
 function formatWebsite(url) {
   if (!url) return null;
@@ -39,9 +41,20 @@ export default function Companies() {
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         {loading ? (
-          <p className="text-center text-text-muted py-12">Loading companies…</p>
+          <CompanyCardSkeletonGrid count={6} />
         ) : companies.length === 0 ? (
-          <p className="text-center text-text-muted py-12">No companies with open jobs yet.</p>
+          <EmptyState
+            icon="🏢"
+            title="No employer profiles yet"
+            description="Companies appear when we can identify a real employer name on active job listings."
+          >
+            <Link
+              to="/jobs"
+              className="rounded-xl border border-blue-primary bg-blue-primary/10 px-4 py-2 text-sm font-medium text-blue-text hover:bg-blue-primary/20"
+            >
+              Browse jobs
+            </Link>
+          </EmptyState>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {companies.map((c) => (
