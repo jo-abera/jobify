@@ -1,16 +1,17 @@
 /**
- * Resume scoring inside Profile — same flow as the former /resume page (ephemeral upload/paste).
- * Persistent resume storage and preview come in later tasks.
+ * Resume tab — saved file (until replaced) plus AI scoring (saved file, upload, or paste).
  */
 import { useState, useEffect } from 'react';
 import { getSavedJobs } from '../../api/tracker.api';
-import { scoreResume, scoreResumeFile } from '../../api/resume.api';
+import { scoreResume, scoreResumeFile, scoreStoredResume } from '../../api/resume.api';
 import ResumeScoreResult from '../ResumeScoreResult';
 import { useAuth } from '../../context/AuthContext';
 import SplitResumeLayout from '../resume/ResumeScorerLayouts';
+import ProfileResumeStorage from './ProfileResumeStorage';
 
 export default function ProfileResumePanel() {
   const { user } = useAuth();
+  const hasSavedResume = Boolean(user?.resumeUrl && user?.resumeFileName);
   const [inputMode, setInputMode] = useState('upload');
   const [resume, setResume] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
@@ -19,6 +20,11 @@ export default function ProfileResumePanel() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (hasSavedResume) setInputMode('saved');
+    else setInputMode((mode) => (mode === 'saved' ? 'upload' : mode));
+  }, [hasSavedResume]);
 
   useEffect(() => {
     getSavedJobs()
@@ -43,12 +49,20 @@ export default function ProfileResumePanel() {
   const canSubmit =
     savedJobs.length > 0 &&
     jobId &&
-    (inputMode === 'upload' ? !!resumeFile : !!resume.trim());
+    (inputMode === 'saved'
+      ? hasSavedResume
+      : inputMode === 'upload'
+        ? !!resumeFile
+        : !!resume.trim());
 
   const handleScore = async (e) => {
     e.preventDefault();
     if (!jobId) {
       setError('Please select a saved job from your tracker.');
+      return;
+    }
+    if (inputMode === 'saved' && !hasSavedResume) {
+      setError('Save a resume above first, or switch to upload/paste.');
       return;
     }
     if (inputMode === 'upload' && !resumeFile) {
@@ -66,9 +80,11 @@ export default function ProfileResumePanel() {
 
     try {
       const res =
-        inputMode === 'upload'
-          ? await scoreResumeFile(jobId, resumeFile)
-          : await scoreResume({ jobId, resume: resume.trim() });
+        inputMode === 'saved'
+          ? await scoreStoredResume(jobId)
+          : inputMode === 'upload'
+            ? await scoreResumeFile(jobId, resumeFile)
+            : await scoreResume({ jobId, resume: resume.trim() });
       setResult(res.data);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -84,6 +100,7 @@ export default function ProfileResumePanel() {
     setResume,
     resumeFile,
     onFileChange: handleFileChange,
+    hasSavedResume,
     savedJobs,
     jobId,
     setJobId,
@@ -98,10 +115,12 @@ export default function ProfileResumePanel() {
       <header>
         <h2 className="text-lg font-semibold text-text-primary">Resume &amp; AI matching</h2>
         <p className="mt-1 text-sm text-text-muted">
-          Compare a resume against a job in your tracker. Upload a file or paste text — your career
-          profile skills are used when highlighting matches.
+          Save a resume on your account, then score it against jobs in your tracker (or use a
+          one-off upload/paste for scoring only).
         </p>
       </header>
+
+      <ProfileResumeStorage />
 
       <SplitResumeLayout {...fieldProps} onSubmit={handleScore} />
 

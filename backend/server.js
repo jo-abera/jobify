@@ -7,6 +7,7 @@
 
 require("dotenv").config({ override: true });
 
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
@@ -54,6 +55,11 @@ app.use(
 );
 
 app.use(passport.initialize());
+
+app.use(
+  "/uploads/resumes",
+  express.static(path.join(__dirname, "uploads/resumes")),
+);
 
 app.use("/api/auth", require("./src/routes/auth.routes"));
 app.use("/api/jobs", require("./src/routes/job.routes"));

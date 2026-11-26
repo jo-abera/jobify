@@ -14,6 +14,8 @@
 const prisma = require("../config/db");
 const { scoreResume } = require("../ai/resume");
 const { extractResumeText } = require("../utils/resumeParser");
+const { PublicUserSelect } = require("../utils/publicUser");
+const resumeStorage = require("../utils/resumeStorage");
 
 async function scoreResumeForJob(resumeText, jobId) {
   const job = await prisma.job.findUnique({ where: { id: jobId } });
@@ -88,5 +90,127 @@ exports.scoreFile = async (req, res) => {
       return res.status(400).json({ message: err.message });
     }
     res.status(500).json({ message: "Failed to score resume" });
+  }
+};
+
+/** Save or replace the user's current resume file (multipart resumeFile). */
+exports.uploadCurrent = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Resume file is required" });
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { resumeUrl: true },
+    });
+
+    if (existing?.resumeUrl) {
+      await resumeStorage.removeResumeFile(req.user.id, existing.resumeUrl);
+    }
+
+    const resumeUrl = await resumeStorage.saveResumeFile(
+      req.file.buffer,
+      req.user.id,
+      req.file.originalname,
+    );
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        resumeUrl,
+        resumeFileName: req.file.originalname,
+        resumeMimeType: req.file.mimetype,
+        resumeUploadedAt: new Date(),
+      },
+      select: PublicUserSelect,
+    });
+
+    res.status(200).json({ status: "success", data: { user: updated } });
+  } catch (err) {
+    console.error(err);
+    const detail =
+      process.env.NODE_ENV === "development" && err.message
+        ? err.message
+        : undefined;
+    res.status(500).json({
+      message: detail || "Failed to save resume",
+      ...(detail && { detail }),
+    });
+  }
+};
+
+/** Remove stored resume metadata and delete the backing file. */
+exports.deleteCurrent = async (req, res) => {
+  try {
+    const existing = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { resumeUrl: true },
+    });
+
+    if (existing?.resumeUrl) {
+      await resumeStorage.removeResumeFile(req.user.id, existing.resumeUrl);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        resumeUrl: null,
+        resumeFileName: null,
+        resumeMimeType: null,
+        resumeUploadedAt: null,
+      },
+      select: PublicUserSelect,
+    });
+
+    res.status(200).json({ status: "success", data: { user: updated } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to remove resume" });
+  }
+};
+
+/** Score the user's saved resume against a job (no re-upload). */
+exports.scoreStored = async (req, res) => {
+  try {
+    const { jobId } = req.body || {};
+    if (!jobId) {
+      return res.status(400).json({ message: "jobId is required" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        resumeUrl: true,
+        resumeMimeType: true,
+        resumeFileName: true,
+      },
+    });
+
+    if (!user?.resumeUrl) {
+      return res.status(400).json({
+        message: "No saved resume. Upload a resume in Profile → Resume first.",
+      });
+    }
+
+    const buffer = await resumeStorage.fetchResumeBuffer(
+      user.resumeUrl,
+      user.resumeMimeType,
+      user.resumeFileName,
+    );
+
+    const resumeText = await extractResumeText(
+      buffer,
+      user.resumeMimeType,
+      user.resumeFileName,
+    );
+    const result = await scoreResumeForJob(resumeText, jobId);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    if (err.statusCode === 404 || err.statusCode === 400) {
+      return res.status(err.statusCode).json({ message: err.message });
+    }
+    res.status(500).json({ message: "Failed to score saved resume" });
   }
 };

@@ -22,3 +22,18 @@ export const scoreResumeFile = (jobId, file) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
+
+/** Save or replace the user's current resume on their profile. */
+export const uploadCurrentResume = (file) => {
+  const formData = new FormData();
+  formData.append('resumeFile', file);
+  return api.post('/api/resume/current', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+export const deleteCurrentResume = () => api.delete('/api/resume/current');
+
+/** Score the saved profile resume against a job (no re-upload). */
+export const scoreStoredResume = (jobId) =>
+  api.post('/api/resume/score-stored', { jobId });

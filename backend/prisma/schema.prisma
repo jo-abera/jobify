@@ -29,6 +29,10 @@ model User {
   passwordResetToken   String?
   passwordResetExpires DateTime?
   passwordChangedAt    DateTime?
+  resumeUrl            String?
+  resumeFileName       String?
+  resumeMimeType       String?
+  resumeUploadedAt     DateTime?
   createdAt            DateTime   @default(now())
   savedJobs            SavedJob[]
 }
