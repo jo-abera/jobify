@@ -6,6 +6,7 @@ import { getSavedJobs, updateStatus, removeJob } from '../api/tracker.api';
 import SectionHeading from '../components/SectionHeading';
 import { TrackerStatsBar, KanbanLayout } from '../components/tracker/TrackerLayoutViews';
 import { TRACKER_STAGES, normalizeTrackerStatus } from '../constants/trackerStages';
+import SavedResumePdfPreview from '../components/resume/SavedResumePdfPreview';
 
 export default function Tracker() {
   const [savedJobs, setSavedJobs] = useState([]);
@@ -89,15 +90,23 @@ export default function Tracker() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <TrackerStatsBar stats={stats} />
-        <KanbanLayout
-          getColumnJobs={getColumnJobs}
-          onStatusChange={handleStatusChange}
-          onNotesSave={handleNotesSave}
-          onAppliedAtSave={handleAppliedAtSave}
-          onFollowUpAtSave={handleFollowUpAtSave}
-          onDelete={handleDelete}
-        />
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
+          <div>
+            <TrackerStatsBar stats={stats} />
+            <KanbanLayout
+              getColumnJobs={getColumnJobs}
+              onStatusChange={handleStatusChange}
+              onNotesSave={handleNotesSave}
+              onAppliedAtSave={handleAppliedAtSave}
+              onFollowUpAtSave={handleFollowUpAtSave}
+              onDelete={handleDelete}
+            />
+          </div>
+          <aside className="space-y-3 xl:sticky xl:top-20 xl:self-start">
+            <h2 className="text-sm font-semibold text-text-primary">Resume for applications</h2>
+            <SavedResumePdfPreview title="PDF preview" compact showEmptyHint />
+          </aside>
+        </div>
       </div>
     </div>
   );
