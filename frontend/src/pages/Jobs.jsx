@@ -1,12 +1,13 @@
 /**
  * Job browse page with search and filters.
  *
- * URL search params (?search=) sync with the search input. JobFilter drives
- * type/location query params on GET /api/jobs. Logged-in users load saved
+ * URL search params (?search=) sync with the search input; last-used filters
+ * are restored from localStorage when you open /jobs with no query string.
+ * JobFilter drives type/location query params on GET /api/jobs. Logged-in users load saved
  * job IDs to show Save state on JobCard.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getJobs, getCategoryCounts } from '../api/jobs.api';
 import { getSavedJobs } from '../api/tracker.api';
@@ -24,6 +25,12 @@ import {
   clearFilterParams,
   JOB_FILTER_PARAM_KEYS,
 } from '../utils/jobListQuery';
+import {
+  hasActiveFilterParams,
+  readStoredJobFilters,
+  writeStoredJobFilters,
+  searchParamsFromStored,
+} from '../utils/jobFilterStorage';
 
 const PAGE_SIZE = 15;
 
@@ -118,6 +125,7 @@ function scoreJobForUser(job, user) {
 
 export default function Jobs() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const filtersHydrated = useRef(false);
   const [jobs, setJobs] = useState([]);
   const [pagination, setPagination] = useState({
     total: 0,
@@ -183,6 +191,27 @@ export default function Jobs() {
       .then((res) => setCatalogJobs(normalizeJobsPayload(res.data)))
       .catch(() => setCatalogJobs([]));
   };
+
+  useEffect(() => {
+    if (filtersHydrated.current) {
+      writeStoredJobFilters(searchParams);
+      return;
+    }
+    filtersHydrated.current = true;
+
+    if (hasActiveFilterParams(searchParams)) {
+      writeStoredJobFilters(searchParams);
+      return;
+    }
+
+    const stored = readStoredJobFilters();
+    if (stored && Object.keys(stored).length > 0) {
+      setSearchParams(searchParamsFromStored(stored), { replace: true });
+      return;
+    }
+
+    writeStoredJobFilters(searchParams);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
