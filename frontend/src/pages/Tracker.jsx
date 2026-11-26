@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { getSavedJobs, updateStatus, removeJob } from '../api/tracker.api';
 import SectionHeading from '../components/SectionHeading';
 import { TrackerStatsBar, KanbanLayout } from '../components/tracker/TrackerLayoutViews';
+import { TRACKER_STAGES, normalizeTrackerStatus } from '../constants/trackerStages';
 import SavedResumePdfPreview from '../components/resume/SavedResumePdfPreview';
 
 export default function Tracker() {
@@ -20,9 +21,14 @@ export default function Tracker() {
 
   const stats = {
     total: savedJobs.length,
-    applied: savedJobs.filter((s) => s.status === 'applied').length,
-    interviewing: savedJobs.filter((s) => s.status === 'interviewing').length,
-    offered: savedJobs.filter((s) => s.status === 'offered').length,
+    ...Object.fromEntries(
+      TRACKER_STAGES.map((stage) => [
+        stage.id,
+        savedJobs.filter(
+          (s) => normalizeTrackerStatus(s.status) === stage.id
+        ).length,
+      ])
+    ),
   };
 
   const handleStatusChange = async (savedId, status) => {
@@ -34,6 +40,25 @@ export default function Tracker() {
     }
   };
 
+  const handleNotesSave = async (savedId, notesText) => {
+    const updated = await updateStatus(savedId, { notes: notesText || null });
+    setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated.data : s)));
+  };
+
+  const handleAppliedAtSave = async (savedId, appliedAtIso) => {
+    const updated = await updateStatus(savedId, {
+      appliedAt: appliedAtIso === null ? null : appliedAtIso,
+    });
+    setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated.data : s)));
+  };
+
+  const handleFollowUpAtSave = async (savedId, followUpAtIso) => {
+    const updated = await updateStatus(savedId, {
+      followUpAt: followUpAtIso === null ? null : followUpAtIso,
+    });
+    setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated.data : s)));
+  };
+
   const handleDelete = async (savedId) => {
     try {
       await removeJob(savedId);
@@ -43,7 +68,8 @@ export default function Tracker() {
     }
   };
 
-  const getColumnJobs = (status) => savedJobs.filter((s) => s.status === status);
+  const getColumnJobs = (status) =>
+    savedJobs.filter((s) => normalizeTrackerStatus(s.status) === status);
 
   if (loading) {
     return <p className="text-text-muted text-center py-12">Loading tracker...</p>;
@@ -58,7 +84,7 @@ export default function Tracker() {
             className="mb-0"
             overline="Your pipeline"
             title="Application tracker"
-            description="Move saved roles through each stage and update status as you hear back."
+            description="Track stages, notes, application and follow-up dates, and update status as you hear back."
           />
         </div>
       </section>
@@ -70,12 +96,14 @@ export default function Tracker() {
             <KanbanLayout
               getColumnJobs={getColumnJobs}
               onStatusChange={handleStatusChange}
+              onNotesSave={handleNotesSave}
+              onAppliedAtSave={handleAppliedAtSave}
+              onFollowUpAtSave={handleFollowUpAtSave}
               onDelete={handleDelete}
             />
           </div>
           <aside className="space-y-3 xl:sticky xl:top-20 xl:self-start">
             <h2 className="text-sm font-semibold text-text-primary">Resume for applications</h2>
-           
             <SavedResumePdfPreview title="PDF preview" compact showEmptyHint />
           </aside>
         </div>
