@@ -6,12 +6,22 @@
  */
 
 const prisma = require("../config/db");
-const { postedAtListingFilter, isWithinListingWindow } = require("../utils/jobListingWindow");
+const { isWithinListingWindow } = require("../utils/jobListingWindow");
 const {
   isValidJobCategory,
   normalizeJobCategory,
 } = require("../constants/jobCategories");
 const { inferJobCategory } = require("../utils/jobCategoryClassifier");
+const { normalizeWorkMode } = require("../utils/jobWorkMode");
+const { normalizeExperienceLevel } = require("../utils/jobExperienceLevel");
+const {
+  buildJobListFilters,
+  MAX_POSTED_WITHIN_DAYS,
+} = require("../utils/jobQueryFilters");
+const { SOURCE_SITE_OPTIONS } = require("../constants/jobSources");
+const { WORK_MODES } = require("../constants/workModes");
+const { EXPERIENCE_LEVELS } = require("../constants/experienceLevels");
+const { JOB_CATEGORIES } = require("../constants/jobCategories");
 
 // exports.getAllJobs = async (req, res) => {
 //   try {
@@ -40,30 +50,27 @@ const { inferJobCategory } = require("../utils/jobCategoryClassifier");
 //   }
 // };
 
+exports.getFilterOptions = async (_req, res) => {
+  try {
+    res.json({
+      categories: JOB_CATEGORIES,
+      workModes: WORK_MODES,
+      experienceLevels: EXPERIENCE_LEVELS,
+      sourceSites: SOURCE_SITE_OPTIONS,
+      postedWithinDays: [1, 3, 7, 14, 30].filter((d) => d <= MAX_POSTED_WITHIN_DAYS),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to load filter options" });
+  }
+};
+
 exports.getAllJobs = async (req, res) => {
   try {
-    const { search, type, location, category, page = 1, limit = 15 } = req.query;
+    const { page = 1, limit = 15 } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const where = {
-      AND: [
-        search
-          ? {
-              OR: [
-                { title: { contains: search, mode: "insensitive" } },
-                { company: { contains: search, mode: "insensitive" } },
-              ],
-            }
-          : {},
-        type ? { type } : {},
-        location
-          ? { location: { contains: location, mode: "insensitive" } }
-          : {},
-        category && isValidJobCategory(category) ? { category } : {},
-        postedAtListingFilter(),
-      ],
-    };
+    const where = buildJobListFilters(req.query);
 
     const [jobs, total] = await Promise.all([
       prisma.job.findMany({
@@ -117,10 +124,22 @@ exports.createJob = async (req, res) => {
             title: req.body.title,
             description: req.body.description,
           });
+    const workMode = normalizeWorkMode(
+      req.body.workMode,
+      req.body.location,
+      req.body.description
+    );
+    const experienceLevel = normalizeExperienceLevel(req.body.experienceLevel, {
+      title: req.body.title,
+      description: req.body.description,
+      type: req.body.type,
+    });
     const job = await prisma.job.create({
       data: {
         ...req.body,
         category,
+        workMode,
+        experienceLevel,
         source: req.body.source || "manual",
       },
     });

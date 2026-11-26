@@ -12,6 +12,8 @@ const {
   preferJobUrl,
 } = require("../utils/avoidDuplicateJobs");
 const { inferJobCategory } = require("../utils/jobCategoryClassifier");
+const { normalizeWorkMode } = require("../utils/jobWorkMode");
+const { normalizeExperienceLevel } = require("../utils/jobExperienceLevel");
 
 const jobFields = (parsed, postedAt) => ({
   title: parsed.title,
@@ -25,6 +27,16 @@ const jobFields = (parsed, postedAt) => ({
     title: parsed.title,
     description: parsed.description,
     sourceCategory: parsed.sourceCategory || parsed.category || '',
+  }),
+  workMode: normalizeWorkMode(
+    parsed.workMode,
+    parsed.location,
+    parsed.description
+  ),
+  experienceLevel: normalizeExperienceLevel(parsed.experienceLevel, {
+    title: parsed.title,
+    description: parsed.description,
+    type: parsed.type,
   }),
   postedAt,
 });

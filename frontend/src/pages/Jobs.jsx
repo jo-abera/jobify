@@ -14,8 +14,15 @@ import { useAuth } from '../context/AuthContext';
 import JobCard from '../components/JobCard';
 import JobFilter from '../components/JobFilter';
 import JobCategoryFilter from '../components/JobCategoryFilter';
+import JobFiltersPanel from '../components/JobFiltersPanel';
 import SectionHeading from '../components/SectionHeading';
 import JobPagination from '../components/JobPagination';
+import {
+  apiParamsFromSearchParams,
+  setFilterParam,
+  clearFilterParams,
+  JOB_FILTER_PARAM_KEYS,
+} from '../utils/jobListQuery';
 
 const PAGE_SIZE = 15;
 
@@ -40,9 +47,9 @@ function parseSalaryEstimate(salaryText) {
   return Math.round(raw);
 }
 
-/** Infers work mode from location text to match profile preferences. */
-function inferWorkMode(location = '') {
-  const value = location.toLowerCase();
+function jobWorkMode(job) {
+  if (job.workMode) return job.workMode;
+  const value = (job.location || '').toLowerCase();
   if (value.includes('remote')) return 'Remote';
   if (value.includes('hybrid')) return 'Hybrid';
   return 'On-site';
@@ -91,10 +98,7 @@ function scoreJobForUser(job, user) {
 
   if (preferredTypes.length > 0 && preferredTypes.includes(job.type))
     score += 25;
-  if (
-    preferredModes.length > 0 &&
-    preferredModes.includes(inferWorkMode(job.location))
-  )
+  if (preferredModes.length > 0 && preferredModes.includes(jobWorkMode(job)))
     score += 20;
 
   const salary = parseSalaryEstimate(job.salary);
@@ -127,10 +131,7 @@ export default function Jobs() {
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [activeCategory, setActiveCategory] = useState(
-    () => searchParams.get('category') || ''
-  );
+  const activeCategory = searchParams.get('category') || '';
   const [usePreferences, setUsePreferences] = useState(false);
   const [savedJobIds, setSavedJobIds] = useState([]);
   const { user } = useAuth();
@@ -147,19 +148,10 @@ export default function Jobs() {
 
   const fetchJobs = () => {
     setLoading(true);
-    const params = { page, limit: PAGE_SIZE };
-    const q = searchParams.get('search');
-    if (q) params.search = q;
-
-    if (activeFilter.startsWith('type:')) {
-      params.type = activeFilter.replace('type:', '');
-    }
-    if (activeFilter.startsWith('loc:')) {
-      params.location = 'Remote';
-    }
-    if (activeCategory) {
-      params.category = activeCategory;
-    }
+    const params = apiParamsFromSearchParams(searchParams, {
+      page,
+      limit: PAGE_SIZE,
+    });
 
     getJobs(params)
       .then((res) => {
@@ -181,10 +173,7 @@ export default function Jobs() {
   };
 
   const fetchCatalogJobs = () => {
-    const params = {};
-    const q = searchParams.get('search');
-    if (q) params.search = q;
-    if (activeCategory) params.category = activeCategory;
+    const params = apiParamsFromSearchParams(searchParams, { limit: 100 });
 
     getJobs(params)
       .then((res) => setCatalogJobs(normalizeJobsPayload(res.data)))
@@ -193,23 +182,22 @@ export default function Jobs() {
 
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
-    setActiveCategory(searchParams.get('category') || '');
   }, [searchParams]);
 
   // Reset to page 1 whenever the search or filter changes, so we don't get
   // stranded on e.g. page 5 of a now-different result set.
   useEffect(() => {
     setPage(1);
-  }, [searchParams, activeFilter, activeCategory]);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchJobs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchParams, activeFilter, activeCategory, page]);
+  }, [searchParams, page]);
 
   useEffect(() => {
     fetchCatalogJobs();
-  }, [searchParams, activeCategory]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
@@ -259,7 +247,7 @@ export default function Jobs() {
             preferredTypes.length === 0 || preferredTypes.includes(job.type);
           const modeOk =
             preferredModes.length === 0 ||
-            preferredModes.includes(inferWorkMode(job.location));
+            preferredModes.includes(jobWorkMode(job));
           const salary = parseSalaryEstimate(job.salary);
           const salaryOk =
             salary === null
@@ -280,23 +268,25 @@ export default function Jobs() {
     setSearchParams(next);
   };
 
-  const handleFilterChange = (filter) => {
-    if (!filter.value && !filter.location) {
-      setActiveFilter('all');
-    } else if (filter.location) {
-      setActiveFilter(`loc:${filter.value}`);
-    } else {
-      setActiveFilter(`type:${filter.value}`);
-    }
+  const handleFilterParam = (key, value) => {
+    setSearchParams(setFilterParam(searchParams, key, value));
   };
 
   const handleCategoryChange = (category) => {
-    setActiveCategory(category);
-    const next = new URLSearchParams(searchParams);
-    if (category) next.set('category', category);
-    else next.delete('category');
-    setSearchParams(next);
+    handleFilterParam('category', category);
   };
+
+  const filterValues = {
+    category: searchParams.get('category') || '',
+    workMode: searchParams.get('workMode') || '',
+    experienceLevel: searchParams.get('experienceLevel') || '',
+    postedWithin: searchParams.get('postedWithin') || '',
+    sourceSite: searchParams.get('sourceSite') || '',
+  };
+
+  const hasActiveFilters = JOB_FILTER_PARAM_KEYS.some(
+    (key) => key !== 'search' && Boolean(searchParams.get(key))
+  );
 
   return (
     <div>
@@ -307,7 +297,7 @@ export default function Jobs() {
             className="mb-8"
             overline="Job board"
             title="Browse jobs"
-            description="Search by title or company. Use category chips above the list and quick filters below."
+            description="Search by title or company, then refine with categories, work mode, experience, date, and source."
             trailing={
               !loading && pagination.total > 0 ? (
                 <p className="rounded-lg border border-border bg-bg-card px-4 py-2.5 text-sm font-semibold text-blue-text tabular-nums shrink-0">
@@ -336,25 +326,17 @@ export default function Jobs() {
             </button>
           </form>
 
-          <div className="mt-8">
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
-              Quick filters
-            </p>
-            <JobFilter
-              activeFilter={activeFilter}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-6 sticky top-16 z-10 -mx-4 px-4 py-3 bg-bg-primary/95 backdrop-blur-sm border-b border-border">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6 lg:hidden">
+          <div className="mb-4 sticky top-16 z-10 -mx-4 px-4 py-3 bg-bg-primary/95 backdrop-blur-sm border-b border-border">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted">
               Browse by category
             </p>
-            {activeCategory && !loading && (
+            {filterValues.category && !loading && (
               <button
                 type="button"
                 onClick={() => handleCategoryChange('')}
@@ -365,10 +347,53 @@ export default function Jobs() {
             )}
           </div>
           <JobCategoryFilter
-            value={activeCategory}
+            value={filterValues.category}
             onChange={handleCategoryChange}
           />
+          </div>
         </div>
+
+        <div className="grid gap-8 lg:grid-cols-[minmax(15rem,17rem)_minmax(0,1fr)]">
+          <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+            <JobFiltersPanel
+              filters={filterValues}
+              onChange={handleFilterParam}
+              onClearAll={() => setSearchParams(clearFilterParams(searchParams))}
+              showClear={hasActiveFilters}
+            />
+            <div className="rounded-card border border-border bg-bg-card p-4 md:p-5">
+              <p className="text-sm font-semibold text-text-primary mb-3">
+                Employment type
+              </p>
+              <JobFilter
+                vertical
+                activeType={searchParams.get('type') || ''}
+                onTypeChange={(type) => handleFilterParam('type', type)}
+              />
+            </div>
+          </aside>
+
+          <div className="min-w-0">
+            <div className="mb-6 hidden lg:block">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted">
+                  Browse by category
+                </p>
+                {filterValues.category && !loading && (
+                  <button
+                    type="button"
+                    onClick={() => handleCategoryChange('')}
+                    className="text-xs font-medium text-blue-text hover:underline"
+                  >
+                    Clear category
+                  </button>
+                )}
+              </div>
+              <JobCategoryFilter
+                value={filterValues.category}
+                onChange={handleCategoryChange}
+              />
+            </div>
 
       {user && hasPreferenceData && (
         <div className="mb-6 bg-bg-card border border-border rounded-card p-4 flex flex-wrap items-center justify-between gap-3">
@@ -435,6 +460,8 @@ export default function Jobs() {
           />
         </>
       )}
+          </div>
+        </div>
       </div>
     </div>
   );
