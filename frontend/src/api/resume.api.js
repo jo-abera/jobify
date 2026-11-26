@@ -58,8 +58,9 @@ export const listResumeVersions = () => api.get('/api/resume/versions');
 export const setResumeVersionCurrent = (versionId) =>
   api.post(`/api/resume/versions/${versionId}/current`);
 
+/** POST alias avoids some clients/proxies dropping Authorization on DELETE. */
 export const deleteResumeVersion = (versionId) =>
-  api.delete(`/api/resume/versions/${versionId}`);
+  api.post(`/api/resume/versions/${versionId}/delete`);
 
 async function openBlobInNewTab(fetchBlob) {
   const popup = window.open('about:blank', '_blank');

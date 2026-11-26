@@ -52,14 +52,22 @@ export default function ProfileResumeVersionHistory({ refreshKey = 0 }) {
     load();
   }, [load, refreshKey]);
 
-  const runAction = async (id, fn) => {
+  const runAction = async (id, fn, { refreshHistory = true } = {}) => {
     setBusyId(id);
     setError('');
     try {
       await fn();
-      load();
+      if (refreshHistory) {
+        const res = await listResumeVersions();
+        setVersions(res.data.data?.versions ?? []);
+      }
     } catch (err) {
-      setError(actionError(err));
+      const status = err.response?.status;
+      if (status === 401) {
+        setError('Your session expired. Log out and sign in again, then retry.');
+      } else {
+        setError(actionError(err));
+      }
     } finally {
       setBusyId(null);
     }
@@ -72,6 +80,10 @@ export default function ProfileResumeVersionHistory({ refreshKey = 0 }) {
     });
 
   const handleDelete = (version) => {
+    if (!localStorage.getItem('token')) {
+      setError('Your session expired. Log out and sign in again, then retry.');
+      return;
+    }
     if (!window.confirm(`Remove "${version.resumeFileName}" from history?`)) return;
     runAction(version.id, async () => {
       const res = await deleteResumeVersion(version.id);
@@ -127,7 +139,9 @@ export default function ProfileResumeVersionHistory({ refreshKey = 0 }) {
                       type="button"
                       disabled={busy}
                       onClick={() =>
-                        runAction(version.id, () => openResumeVersion(version.id))
+                        runAction(version.id, () => openResumeVersion(version.id), {
+                          refreshHistory: false,
+                        })
                       }
                       className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-50"
                     >
@@ -137,8 +151,11 @@ export default function ProfileResumeVersionHistory({ refreshKey = 0 }) {
                       type="button"
                       disabled={busy}
                       onClick={() =>
-                        runAction(version.id, () =>
-                          downloadResumeVersion(version.id, version.resumeFileName)
+                        runAction(
+                          version.id,
+                          () =>
+                            downloadResumeVersion(version.id, version.resumeFileName),
+                          { refreshHistory: false }
                         )
                       }
                       className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-50"

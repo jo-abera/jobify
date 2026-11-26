@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import FileDropZone from '../FileDropZone';
+import ResumePdfPreview from '../resume/ResumePdfPreview';
+import { isResumePdf } from '../../utils/resumePreview';
 import { RESUME_FILE_ACCEPT } from '../resume/ResumeScorerFields';
 import { uploadCurrentResume, deleteCurrentResume } from '../../api/resume.api';
 import { useAuth } from '../../context/AuthContext';
@@ -29,7 +31,7 @@ export default function ProfileResumeStorage({ onUpdated }) {
     try {
       const res = await uploadCurrentResume(pendingFile);
       syncUser(res.data.data.user);
-      setPendingFile(null);
+      setPendingFile(null); // clears dropzone + PDF preview after save
       setMessage('Current resume updated on your profile.');
       onUpdated?.();
     } catch (err) {
@@ -69,8 +71,8 @@ export default function ProfileResumeStorage({ onUpdated }) {
         </h3>
         <p className="mt-1 text-xs text-text-muted">
           {hasSaved
-            ? 'Choosing a new file and saving updates the Current resume section above.'
-            : 'Your upload becomes the current resume for this account.'}
+            ? 'Pick a PDF to preview it here, then save to replace your current resume.'
+            : 'Pick a file to preview PDFs here, then save to set your current resume.'}
         </p>
       </div>
 
@@ -85,6 +87,14 @@ export default function ProfileResumeStorage({ onUpdated }) {
           setMessage('');
         }}
       />
+
+      {pendingFile && isResumePdf(pendingFile.name, pendingFile.type, pendingFile) && !saving && (
+        <ResumePdfPreview
+          title="PDF preview"
+          file={pendingFile}
+          refreshKey={`${pendingFile.name}-${pendingFile.lastModified}-${pendingFile.size}`}
+        />
+      )}
 
       <div className="flex flex-wrap gap-2">
         <button

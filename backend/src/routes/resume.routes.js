@@ -40,5 +40,6 @@ router.get("/versions", auth, resumeController.listVersions);
 router.get("/versions/:id/file", auth, resumeController.serveVersionFile);
 router.post("/versions/:id/current", auth, resumeController.setCurrentVersion);
 router.delete("/versions/:id", auth, resumeController.deleteVersion);
+router.post("/versions/:id/delete", auth, resumeController.deleteVersion);
 
 module.exports = router;

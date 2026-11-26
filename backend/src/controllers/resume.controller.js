@@ -320,17 +320,22 @@ exports.listVersions = async (req, res) => {
       select: { ...versionSelect, resumeUrl: true },
     });
 
+    const versions = versionRows
+      .map((v) => ({
+        id: v.id,
+        resumeFileName: v.resumeFileName,
+        resumeMimeType: v.resumeMimeType,
+        uploadedAt: v.uploadedAt,
+        isCurrent: user?.resumeUrl === v.resumeUrl,
+      }))
+      .sort((a, b) => {
+        if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+        return new Date(b.uploadedAt) - new Date(a.uploadedAt);
+      });
+
     res.status(200).json({
       status: "success",
-      data: {
-        versions: versionRows.map((v) => ({
-          id: v.id,
-          resumeFileName: v.resumeFileName,
-          resumeMimeType: v.resumeMimeType,
-          uploadedAt: v.uploadedAt,
-          isCurrent: user?.resumeUrl === v.resumeUrl,
-        })),
-      },
+      data: { versions },
     });
   } catch (err) {
     console.error(err);
