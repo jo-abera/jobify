@@ -178,12 +178,15 @@ exports.uploadCurrent = async (req, res) => {
     res.status(200).json({ status: "success", data: { user: updated } });
   } catch (err) {
     console.error(err);
+    const status = err.statusCode || 500;
     const detail =
-      process.env.NODE_ENV === "development" && err.message
+      (process.env.NODE_ENV === "development" || status === 503) && err.message
         ? err.message
         : undefined;
-    res.status(500).json({
-      message: detail || "Failed to save resume",
+    res.status(status).json({
+      message:
+        detail ||
+        (status === 503 ? "Resume storage is not available" : "Failed to save resume"),
       ...(detail && { detail }),
     });
   }

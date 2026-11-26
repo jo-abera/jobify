@@ -30,9 +30,21 @@ function originalnameExtension(originalName) {
  * @param {string} originalName
  * @returns {Promise<string>} public URL
  */
+function assertResumeStorageReady() {
+  if (process.env.NODE_ENV === 'production' && !cloudinary.isConfigured()) {
+    const err = new Error(
+      'Resume storage is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.'
+    )
+    err.statusCode = 503
+    throw err
+  }
+}
+
 async function saveResumeFile(buffer, storageKey, originalName) {
+  assertResumeStorageReady()
+
   if (cloudinary.isConfigured()) {
-    return cloudinary.uploadResume(buffer, storageKey)
+    return cloudinary.uploadResume(buffer, storageKey, originalName)
   }
 
   console.warn(
@@ -55,11 +67,15 @@ async function saveResumeFile(buffer, storageKey, originalName) {
 async function removeResumeFileByKey(storageKey, resumeUrl) {
   if (!storageKey && !resumeUrl) return
 
-  if (cloudinary.isConfigured() && resumeUrl?.includes('res.cloudinary.com')) {
+  if (cloudinary.isConfigured() && cloudinary.isCloudinaryUrl(resumeUrl)) {
     try {
-      await cloudinary.destroyResume(storageKey)
+      await cloudinary.destroyResumeByUrl(resumeUrl)
     } catch (err) {
-      console.warn('[resume] Cloudinary delete failed:', err.message)
+      try {
+        await cloudinary.destroyResume(storageKey)
+      } catch (legacyErr) {
+        console.warn('[resume] Cloudinary delete failed:', legacyErr.message || err.message)
+      }
     }
     return
   }
@@ -77,11 +93,15 @@ async function removeResumeFileByKey(storageKey, resumeUrl) {
 async function removeResumeFile(userId, resumeUrl) {
   if (!resumeUrl) return
 
-  if (cloudinary.isConfigured() && resumeUrl.includes('res.cloudinary.com')) {
+  if (cloudinary.isConfigured() && cloudinary.isCloudinaryUrl(resumeUrl)) {
     try {
-      await cloudinary.destroyResume(userId)
+      await cloudinary.destroyResumeByUrl(resumeUrl)
     } catch (err) {
-      console.warn('[resume] Cloudinary delete failed:', err.message)
+      try {
+        await cloudinary.destroyResume(userId)
+      } catch (legacyErr) {
+        console.warn('[resume] Cloudinary delete failed:', legacyErr.message || err.message)
+      }
     }
     return
   }
@@ -100,6 +120,14 @@ async function fetchResumeBuffer(resumeUrl, mimeType, fileName) {
     const err = new Error('No resume on file')
     err.statusCode = 404
     throw err
+  }
+
+  if (resumeUrl.includes('/uploads/resumes/')) {
+    const fileName = resumeUrl.split('/uploads/resumes/').pop().split('?')[0]
+    const diskPath = path.join(UPLOAD_DIR, fileName)
+    if (fs.existsSync(diskPath)) {
+      return fs.readFileSync(diskPath)
+    }
   }
 
   if (resumeUrl.startsWith('http://') || resumeUrl.startsWith('https://')) {
@@ -122,5 +150,6 @@ module.exports = {
   removeResumeFile,
   removeResumeFileByKey,
   fetchResumeBuffer,
+  isCloudinaryEnabled: cloudinary.isConfigured,
   UPLOAD_DIR,
 }
