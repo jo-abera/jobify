@@ -219,6 +219,8 @@ The backend scraper reads recent posts from configured public Telegram channels 
 
 The public jobs endpoint filters records to the last seven days and orders them by `postedAt` descending. Telegram publication timestamps are stored when available. Posts without an external application URL use a unique Telegram message URL so they do not overwrite other posts from the same channel.
 
+Each scraped job gets a **`category`** (Engineering, Sales, Marketing, etc.): the parser reads labels such as `Category:`, `Department:`, `Industry:`, or `Sector:` when present; otherwise `jobCategoryClassifier` infers from title and description. Re-scraping updates category with the latest post text. To reclassify existing rows without waiting for a scrape, run `node backend/scripts/backfill-job-categories.js`.
+
 An administrator can also start a scrape manually from the admin dashboard.
 
 ## API Overview

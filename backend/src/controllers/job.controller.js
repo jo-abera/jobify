@@ -6,7 +6,22 @@
  */
 
 const prisma = require("../config/db");
-const { postedAtListingFilter, isWithinListingWindow } = require("../utils/jobListingWindow");
+const { isWithinListingWindow } = require("../utils/jobListingWindow");
+const {
+  isValidJobCategory,
+  normalizeJobCategory,
+} = require("../constants/jobCategories");
+const { inferJobCategory } = require("../utils/jobCategoryClassifier");
+const { normalizeWorkMode } = require("../utils/jobWorkMode");
+const { normalizeExperienceLevel } = require("../utils/jobExperienceLevel");
+const {
+  buildJobListFilters,
+  MAX_POSTED_WITHIN_DAYS,
+} = require("../utils/jobQueryFilters");
+const { SOURCE_SITE_OPTIONS } = require("../constants/jobSources");
+const { WORK_MODES } = require("../constants/workModes");
+const { EXPERIENCE_LEVELS } = require("../constants/experienceLevels");
+const { JOB_CATEGORIES } = require("../constants/jobCategories");
 
 // exports.getAllJobs = async (req, res) => {
 //   try {
@@ -35,29 +50,65 @@ const { postedAtListingFilter, isWithinListingWindow } = require("../utils/jobLi
 //   }
 // };
 
+exports.getFilterOptions = async (_req, res) => {
+  try {
+    res.json({
+      categories: JOB_CATEGORIES,
+      workModes: WORK_MODES,
+      experienceLevels: EXPERIENCE_LEVELS,
+      sourceSites: SOURCE_SITE_OPTIONS,
+      postedWithinDays: [1, 3, 7, 14, 30].filter((d) => d <= MAX_POSTED_WITHIN_DAYS),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to load filter options" });
+  }
+};
+
+/** Job counts per category; respects current filters except `category`. */
+exports.getCategoryCounts = async (req, res) => {
+  try {
+    const query = { ...req.query };
+    delete query.category;
+    delete query.page;
+    delete query.limit;
+
+    const where = buildJobListFilters(query);
+
+    const grouped = await prisma.job.groupBy({
+      by: ["category"],
+      where,
+      _count: { _all: true },
+    });
+
+    const byCategory = Object.fromEntries(
+      JOB_CATEGORIES.map((name) => [name, 0])
+    );
+    let total = 0;
+
+    for (const row of grouped) {
+      const count = row._count._all;
+      if (byCategory[row.category] !== undefined) {
+        byCategory[row.category] = count;
+      } else {
+        byCategory.Other = (byCategory.Other || 0) + count;
+      }
+      total += count;
+    }
+
+    res.json({ total, byCategory });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to load category counts" });
+  }
+};
+
 exports.getAllJobs = async (req, res) => {
   try {
-    const { search, type, location, page = 1, limit = 15 } = req.query;
+    const { page = 1, limit = 15 } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const where = {
-      AND: [
-        search
-          ? {
-              OR: [
-                { title: { contains: search, mode: "insensitive" } },
-                { company: { contains: search, mode: "insensitive" } },
-              ],
-            }
-          : {},
-        type ? { type } : {},
-        location
-          ? { location: { contains: location, mode: "insensitive" } }
-          : {},
-        postedAtListingFilter(),
-      ],
-    };
+    const where = buildJobListFilters(req.query);
 
     const [jobs, total] = await Promise.all([
       prisma.job.findMany({
@@ -104,8 +155,31 @@ exports.getJobById = async (req, res) => {
 
 exports.createJob = async (req, res) => {
   try {
+    const category =
+      req.body.category && isValidJobCategory(req.body.category)
+        ? normalizeJobCategory(req.body.category)
+        : inferJobCategory({
+            title: req.body.title,
+            description: req.body.description,
+          });
+    const workMode = normalizeWorkMode(
+      req.body.workMode,
+      req.body.location,
+      req.body.description
+    );
+    const experienceLevel = normalizeExperienceLevel(req.body.experienceLevel, {
+      title: req.body.title,
+      description: req.body.description,
+      type: req.body.type,
+    });
     const job = await prisma.job.create({
-      data: { ...req.body, source: req.body.source || "manual" },
+      data: {
+        ...req.body,
+        category,
+        workMode,
+        experienceLevel,
+        source: req.body.source || "manual",
+      },
     });
     res.status(201).json(job);
   } catch (err) {
@@ -121,9 +195,13 @@ exports.createJob = async (req, res) => {
 
 exports.updateJob = async (req, res) => {
   try {
+    const data = { ...req.body };
+    if (Object.prototype.hasOwnProperty.call(req.body, "category")) {
+      data.category = normalizeJobCategory(req.body.category);
+    }
     const job = await prisma.job.update({
       where: { id: req.params.id },
-      data: req.body,
+      data,
     });
     res.status(200).json(job);
   } catch (err) {
