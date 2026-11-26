@@ -22,7 +22,7 @@ export function TrackerStatsBar({ stats }) {
   );
 }
 
-export function KanbanLayout({ getColumnJobs, onStatusChange, onDelete }) {
+export function KanbanLayout({ getColumnJobs, onStatusChange, onNotesSave, onDelete }) {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
       {TRACKER_STAGES.map((col) => {
@@ -54,6 +54,7 @@ export function KanbanLayout({ getColumnJobs, onStatusChange, onDelete }) {
                     key={saved.id}
                     saved={saved}
                     onStatusChange={onStatusChange}
+                    onNotesSave={onNotesSave}
                     onDelete={onDelete}
                   />
                 ))

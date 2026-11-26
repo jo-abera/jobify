@@ -57,7 +57,10 @@ exports.updateStatus = async (req, res) => {
       }
       data.status = normalizeTrackerStatus(status);
     }
-    if (notes !== undefined) data.notes = notes;
+    if (notes !== undefined) {
+      const trimmed = typeof notes === "string" ? notes.trim() : "";
+      data.notes = trimmed ? trimmed.slice(0, 2000) : null;
+    }
 
     const updated = await prisma.savedJob.update({
       where: { id: req.params.id },

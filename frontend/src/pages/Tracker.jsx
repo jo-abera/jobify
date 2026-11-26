@@ -39,6 +39,11 @@ export default function Tracker() {
     }
   };
 
+  const handleNotesSave = async (savedId, notesText) => {
+    const updated = await updateStatus(savedId, { notes: notesText || null });
+    setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated.data : s)));
+  };
+
   const handleDelete = async (savedId) => {
     try {
       await removeJob(savedId);
@@ -64,7 +69,7 @@ export default function Tracker() {
             className="mb-0"
             overline="Your pipeline"
             title="Application tracker"
-            description="Move saved roles through each stage and update status as you hear back."
+            description="Track stages, add notes per application, and update status as you hear back."
           />
         </div>
       </section>
@@ -74,6 +79,7 @@ export default function Tracker() {
         <KanbanLayout
           getColumnJobs={getColumnJobs}
           onStatusChange={handleStatusChange}
+          onNotesSave={handleNotesSave}
           onDelete={handleDelete}
         />
       </div>
