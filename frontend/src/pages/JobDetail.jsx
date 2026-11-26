@@ -6,13 +6,14 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { getJobById } from '../api/jobs.api';
 import { saveJob, getSavedJobs } from '../api/tracker.api';
 import { scoreResume, scoreResumeFile } from '../api/resume.api';
 import { useAuth } from '../context/AuthContext';
 import JobDetailResumeMatch from '../components/job/JobDetailResumeMatch';
 import { SplitJobDetailLayout } from '../components/job/JobDetailLayouts';
+import EmptyState from '../components/EmptyState';
 import { recordJobView } from '../utils/recentlyViewedJobs';
 
 export default function JobDetail() {
@@ -98,7 +99,22 @@ export default function JobDetail() {
       </p>
     );
   if (!job)
-    return <p className="text-text-muted text-center py-12">Job not found.</p>;
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16">
+        <EmptyState
+          icon="?"
+          title="Job not found"
+          description="It may have expired, been removed, or the link is incorrect."
+        >
+          <Link
+            to="/jobs"
+            className="rounded-xl border border-blue-primary bg-blue-primary/10 px-4 py-2 text-sm font-medium text-blue-text hover:bg-blue-primary/20"
+          >
+            Browse jobs
+          </Link>
+        </EmptyState>
+      </div>
+    );
 
   const resumeMatch = user ? (
     <JobDetailResumeMatch

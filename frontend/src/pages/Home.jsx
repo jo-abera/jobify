@@ -12,6 +12,7 @@ import JobCategoryFilter from '../components/JobCategoryFilter';
 import HomeHero from '../components/HomeHero';
 import SectionHeading from '../components/SectionHeading';
 import RecentlyViewedJobs from '../components/RecentlyViewedJobs';
+import EmptyState from '../components/EmptyState';
 
 export default function () {
   const [search, setSearch] = useState('');
@@ -94,9 +95,19 @@ export default function () {
           </div>
 
           {latestJobs.length === 0 && (
-            <p className="text-text-muted text-center py-12">
-              No jobs yet. Run the seed script to add sample data.
-            </p>
+            <EmptyState
+              icon="📋"
+              title="No jobs listed yet"
+              description="When the scraper runs or jobs are added, the latest openings will appear here."
+            >
+              <button
+                type="button"
+                onClick={() => navigate('/jobs')}
+                className="rounded-xl border border-blue-primary bg-blue-primary/10 px-4 py-2 text-sm font-medium text-blue-text hover:bg-blue-primary/20"
+              >
+                Browse jobs
+              </button>
+            </EmptyState>
           )}
         </div>
       </section>

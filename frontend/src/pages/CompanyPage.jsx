@@ -5,6 +5,7 @@ import { getSavedJobs } from '../api/tracker.api';
 import { useAuth } from '../context/AuthContext';
 import JobCard from '../components/JobCard';
 import SectionHeading from '../components/SectionHeading';
+import EmptyState from '../components/EmptyState';
 
 function formatWebsite(url) {
   if (!url) return null;
@@ -142,7 +143,19 @@ export default function CompanyPage() {
         <section>
           <h2 className="text-lg font-bold text-text-primary mb-4">Open jobs</h2>
           {jobs.length === 0 ? (
-            <p className="text-sm text-text-muted">No active listings right now.</p>
+            <EmptyState
+              compact
+              icon="—"
+              title="No open roles"
+              description="This employer has no active listings on Jobify right now."
+            >
+              <Link
+                to="/companies"
+                className="text-xs font-medium text-blue-text hover:underline"
+              >
+                Browse other companies
+              </Link>
+            </EmptyState>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {jobs.map((job) => (
