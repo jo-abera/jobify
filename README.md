@@ -26,16 +26,39 @@ Sign in on the live site, then open **/admin** for the admin dashboard.
 
 ## Features
 
-- Browse and search recent job listings
-- Filter jobs by type and location
+### Jobs & discovery
+
+- Browse and search recent job listings (title, company, description)
+- **Companies** directory (`/companies`) and company profile pages with aggregated open roles
+- Filter by category, work mode, experience, date range, and source; optional “use my profile preferences” for logged-in users
+- **Remembers your last job filters** on `/jobs` in the browser (restored when you return with no URL params)
 - Show jobs from the latest seven days, ordered newest first
+- Job detail view with **cleaned descriptions** (structured bullets, trimmed Telegram/channel footers)
+
+### Applications & resume
+
+- Save jobs and track application progress on a Kanban-style tracker
+- **Apply with resume** on job detail: opens the listing’s apply link and downloads your saved resume file
+- Upload a PDF, DOCX, or TXT resume for AI matching (Groq) against a job or pasted description
+
+### Account & profile
+
 - Register and sign in with email/password or Google OAuth
 - Reset passwords by email
-- Save jobs and track application progress
-- Upload a PDF, DOCX, or TXT resume for AI matching
-- Manage profile details, preferences, and avatars
+- Manage profile, job preferences, avatar, and optional **GitHub / LinkedIn / portfolio** links
+- **Profile strength** checklist on the Career profile tab and subtle **action-needed** hints in the account menu when setup is incomplete
+
+### Admin & data
+
 - Admin dashboard for jobs, users, statistics, and manual scraping
 - Telegram job scraping with hourly scheduling
+- Employer names and locations normalized from scraped text; categories inferred when posts omit them
+
+### UI
+
+- Light/dark theme
+- **Empty states** on jobs, companies, tracker columns, and detail pages when there is nothing to show
+- **Wave shimmer loading skeletons** while lists are fetching
 
 ## Tech Stack
 
@@ -167,6 +190,17 @@ npx prisma db push
 
 For production, use a reviewed Prisma migration workflow after the initial schema setup.
 
+**Upgrading an existing database?** After `db push`, apply any supplemental SQL in `backend/scripts/` that your schema still needs (for example `add-company-table.sql`, `add-profile-links.sql`, `add-job-category.sql`), then run optional backfills:
+
+```bash
+cd backend
+node scripts/backfill-job-categories.js
+node scripts/backfill-job-company-names.js
+node scripts/backfill-job-locations.js
+```
+
+Use `node scripts/run-sql-file.js scripts/<file>.sql` if you prefer running a script over a manual SQL client.
+
 ### 4. Start the applications
 
 In one terminal:
@@ -221,6 +255,8 @@ The public jobs endpoint filters records to the last seven days and orders them 
 
 Each scraped job gets a **`category`** (Engineering, Sales, Marketing, etc.): the parser reads labels such as `Category:`, `Department:`, `Industry:`, or `Sector:` when present; otherwise `jobCategoryClassifier` infers from title and description. Re-scraping updates category with the latest post text. To reclassify existing rows without waiting for a scrape, run `node backend/scripts/backfill-job-categories.js`.
 
+Employer **`company`** names and **`location`** fields are normalized for listing, filtering, and company pages; run `backfill-job-company-names.js` and `backfill-job-locations.js` after large imports or rule changes.
+
 An administrator can also start a scrape manually from the admin dashboard.
 
 ## API Overview
@@ -233,6 +269,8 @@ Base URL: `http://localhost:5000`
 GET  /api/jobs
 GET  /api/jobs/:id
 GET  /api/jobs/stats
+GET  /api/companies
+GET  /api/companies/:slug
 POST /api/auth/register
 POST /api/auth/login
 POST /api/auth/forgot-password
@@ -253,7 +291,10 @@ PATCH  /api/tracker/:id
 DELETE /api/tracker/:id
 POST   /api/resume/score
 POST   /api/resume/score-file
+GET    /api/resume/current/file
 ```
+
+Resume **apply-with-download** uses your authenticated saved resume (`GET /api/resume/current/file`) from the frontend when you choose Apply with resume on a job.
 
 ### Admin routes
 
