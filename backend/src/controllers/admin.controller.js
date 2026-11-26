@@ -7,7 +7,8 @@
 
 const prisma = require("../config/db");
 const { scrapeJobs } = require("../scraper");
-const { extractResumeText } = require('../utils/resumeParser')
+const { extractResumeText } = require('../utils/resumeParser');
+const { normalizeJobCategory } = require("../constants/jobCategories");
 
 
 /** Build calandar-day buckets for the last 7 days (charts) */
@@ -129,7 +130,7 @@ exports.getAllJobs = async (req, res) => {
 
 exports.createJob = async (req, res) => {
   try {
-    const { title, company, location, salary, url, description, type } =
+    const { title, company, location, salary, url, description, type, category } =
       req.body;
     if (!title || !company || !location || !url || !description) {
       return res
@@ -145,6 +146,7 @@ exports.createJob = async (req, res) => {
         url,
         description,
         type: type || "Full-time",
+        category: normalizeJobCategory(category),
         source: "manual",
       },
     });

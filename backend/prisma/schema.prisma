@@ -42,9 +42,12 @@ model Job {
   url         String     @unique
   description String
   type        String     @default("Full-time")
+  category    String     @default("Other") // Engineering, Sales, Marketing, …
   source      String     @default("manual") // manual | scraper URL | company site
   postedAt    DateTime   @default(now())
   savedBy     SavedJob[]
+
+  @@index([category])
 }
 
 // User bookmark + application pipeline status (kanban).

@@ -8,6 +8,7 @@ const {
   pickStoredUrl,
   preferJobUrl,
 } = require("../utils/avoidDuplicateJobs");
+const { inferJobCategory } = require("../utils/jobCategoryClassifier");
 
 const jobFields = (parsed, postedAt) => ({
   title: parsed.title,
@@ -17,6 +18,11 @@ const jobFields = (parsed, postedAt) => ({
   type: parsed.type,
   description: parsed.description,
   source: parsed.source,
+  category: inferJobCategory({
+    title: parsed.title,
+    description: parsed.description,
+    sourceCategory: parsed.category,
+  }),
   postedAt,
 });
 

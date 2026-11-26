@@ -13,6 +13,7 @@ import { getSavedJobs } from '../api/tracker.api';
 import { useAuth } from '../context/AuthContext';
 import JobCard from '../components/JobCard';
 import JobFilter from '../components/JobFilter';
+import JobCategoryFilter from '../components/JobCategoryFilter';
 import SectionHeading from '../components/SectionHeading';
 import JobPagination from '../components/JobPagination';
 
@@ -127,6 +128,9 @@ export default function Jobs() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [activeCategory, setActiveCategory] = useState(
+    () => searchParams.get('category') || ''
+  );
   const [usePreferences, setUsePreferences] = useState(false);
   const [savedJobIds, setSavedJobIds] = useState([]);
   const { user } = useAuth();
@@ -153,6 +157,9 @@ export default function Jobs() {
     if (activeFilter.startsWith('loc:')) {
       params.location = 'Remote';
     }
+    if (activeCategory) {
+      params.category = activeCategory;
+    }
 
     getJobs(params)
       .then((res) => {
@@ -177,6 +184,7 @@ export default function Jobs() {
     const params = {};
     const q = searchParams.get('search');
     if (q) params.search = q;
+    if (activeCategory) params.category = activeCategory;
 
     getJobs(params)
       .then((res) => setCatalogJobs(normalizeJobsPayload(res.data)))
@@ -185,22 +193,23 @@ export default function Jobs() {
 
   useEffect(() => {
     setSearch(searchParams.get('search') || '');
+    setActiveCategory(searchParams.get('category') || '');
   }, [searchParams]);
 
   // Reset to page 1 whenever the search or filter changes, so we don't get
   // stranded on e.g. page 5 of a now-different result set.
   useEffect(() => {
     setPage(1);
-  }, [searchParams, activeFilter]);
+  }, [searchParams, activeFilter, activeCategory]);
 
   useEffect(() => {
     fetchJobs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchParams, activeFilter, page]);
+  }, [searchParams, activeFilter, activeCategory, page]);
 
   useEffect(() => {
     fetchCatalogJobs();
-  }, [searchParams]);
+  }, [searchParams, activeCategory]);
 
   useEffect(() => {
     if (user) {
@@ -281,6 +290,14 @@ export default function Jobs() {
     }
   };
 
+  const handleCategoryChange = (category) => {
+    setActiveCategory(category);
+    const next = new URLSearchParams(searchParams);
+    if (category) next.set('category', category);
+    else next.delete('category');
+    setSearchParams(next);
+  };
+
   return (
     <div>
       <section className="border-b border-border bg-bg-secondary/40">
@@ -319,11 +336,25 @@ export default function Jobs() {
             </button>
           </form>
 
-          <div className="mt-8">
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
-              Quick filters
-            </p>
-            <JobFilter activeFilter={activeFilter} onFilterChange={handleFilterChange} />
+          <div className="mt-8 space-y-6">
+            <div>
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
+                Category
+              </p>
+              <JobCategoryFilter
+                value={activeCategory}
+                onChange={handleCategoryChange}
+              />
+            </div>
+            <div>
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
+                Quick filters
+              </p>
+              <JobFilter
+                activeFilter={activeFilter}
+                onFilterChange={handleFilterChange}
+              />
+            </div>
           </div>
         </div>
       </section>

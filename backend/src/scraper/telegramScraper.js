@@ -63,6 +63,8 @@ function parseJobMessage(text, channelName, messageUrl) {
     .replace(/Employment Type:/gi, "\nEmployment Type:")
     .replace(/Working Hours:/gi, "\nWorking Hours:")
     .replace(/Experience Level:/gi, "\nExperience Level:")
+    .replace(/Category:/gi, "\nCategory:")
+    .replace(/Department:/gi, "\nDepartment:")
     .replace(/Verified Company/gi, "\nVerified Company");
 
   // ─── Title — stop at Education: or ▪️ ──────────────
@@ -111,6 +113,10 @@ function parseJobMessage(text, channelName, messageUrl) {
     normalized.match(/Job Type[:\s]+([^\n\r]+?)(?:\s+Working Hours|$)/i) ||
     normalized.match(/Employment Type[:\s]+([^\n\r]+)/i);
 
+  const categoryMatch =
+    normalized.match(/Category[:\s]+([^\n\r]+)/i) ||
+    normalized.match(/Department[:\s]+([^\n\r]+)/i);
+
   // ─── URL ─────────────────────────────────────────────
   // Note: matched against the original (un-normalized) text, not "normalized"
   const urlMatch = text.match(
@@ -135,6 +141,7 @@ function parseJobMessage(text, channelName, messageUrl) {
   const location = clean(locationMatch?.[1], 100) || "Addis Ababa, Ethiopia";
   const salary = clean(salaryMatch?.[1], 100) || null;
   const type = clean(typeMatch?.[1], 80) || "Full-time";
+  const category = clean(categoryMatch?.[1], 80) || null;
   const applyLink = urlMatch?.[1]?.trim() || null;
 
   // Reject messages that aren't actually valid job posts —
@@ -156,6 +163,7 @@ function parseJobMessage(text, channelName, messageUrl) {
     location,
     salary,
     type,
+    category,
     applyLink,
     messageUrl: messageUrl || null,
     description: text.trim().substring(0, 2000), // store original raw text (capped length)

@@ -7,6 +7,11 @@
 
 const prisma = require("../config/db");
 const { postedAtListingFilter, isWithinListingWindow } = require("../utils/jobListingWindow");
+const {
+  isValidJobCategory,
+  normalizeJobCategory,
+} = require("../constants/jobCategories");
+const { inferJobCategory } = require("../utils/jobCategoryClassifier");
 
 // exports.getAllJobs = async (req, res) => {
 //   try {
@@ -37,7 +42,7 @@ const { postedAtListingFilter, isWithinListingWindow } = require("../utils/jobLi
 
 exports.getAllJobs = async (req, res) => {
   try {
-    const { search, type, location, page = 1, limit = 15 } = req.query;
+    const { search, type, location, category, page = 1, limit = 15 } = req.query;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -55,6 +60,7 @@ exports.getAllJobs = async (req, res) => {
         location
           ? { location: { contains: location, mode: "insensitive" } }
           : {},
+        category && isValidJobCategory(category) ? { category } : {},
         postedAtListingFilter(),
       ],
     };
@@ -104,8 +110,19 @@ exports.getJobById = async (req, res) => {
 
 exports.createJob = async (req, res) => {
   try {
+    const category =
+      req.body.category && isValidJobCategory(req.body.category)
+        ? normalizeJobCategory(req.body.category)
+        : inferJobCategory({
+            title: req.body.title,
+            description: req.body.description,
+          });
     const job = await prisma.job.create({
-      data: { ...req.body, source: req.body.source || "manual" },
+      data: {
+        ...req.body,
+        category,
+        source: req.body.source || "manual",
+      },
     });
     res.status(201).json(job);
   } catch (err) {
@@ -121,9 +138,13 @@ exports.createJob = async (req, res) => {
 
 exports.updateJob = async (req, res) => {
   try {
+    const data = { ...req.body };
+    if (Object.prototype.hasOwnProperty.call(req.body, "category")) {
+      data.category = normalizeJobCategory(req.body.category);
+    }
     const job = await prisma.job.update({
       where: { id: req.params.id },
-      data: req.body,
+      data,
     });
     res.status(200).json(job);
   } catch (err) {
