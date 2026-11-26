@@ -307,7 +307,7 @@ export default function Jobs() {
             className="mb-8"
             overline="Job board"
             title="Browse jobs"
-            description="Search by title or company, then narrow results with quick filters."
+            description="Search by title or company. Use category chips above the list and quick filters below."
             trailing={
               !loading && pagination.total > 0 ? (
                 <p className="rounded-lg border border-border bg-bg-card px-4 py-2.5 text-sm font-semibold text-blue-text tabular-nums shrink-0">
@@ -336,30 +336,40 @@ export default function Jobs() {
             </button>
           </form>
 
-          <div className="mt-8 space-y-6">
-            <div>
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
-                Category
-              </p>
-              <JobCategoryFilter
-                value={activeCategory}
-                onChange={handleCategoryChange}
-              />
-            </div>
-            <div>
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
-                Quick filters
-              </p>
-              <JobFilter
-                activeFilter={activeFilter}
-                onFilterChange={handleFilterChange}
-              />
-            </div>
+          <div className="mt-8">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
+              Quick filters
+            </p>
+            <JobFilter
+              activeFilter={activeFilter}
+              onFilterChange={handleFilterChange}
+            />
           </div>
         </div>
       </section>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-6 sticky top-16 z-10 -mx-4 px-4 py-3 bg-bg-primary/95 backdrop-blur-sm border-b border-border">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted">
+              Browse by category
+            </p>
+            {activeCategory && !loading && (
+              <button
+                type="button"
+                onClick={() => handleCategoryChange('')}
+                className="text-xs font-medium text-blue-text hover:underline"
+              >
+                Clear category
+              </button>
+            )}
+          </div>
+          <JobCategoryFilter
+            value={activeCategory}
+            onChange={handleCategoryChange}
+          />
+        </div>
+
       {user && hasPreferenceData && (
         <div className="mb-6 bg-bg-card border border-border rounded-card p-4 flex flex-wrap items-center justify-between gap-3">
           <div>

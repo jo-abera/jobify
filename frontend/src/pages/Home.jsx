@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getJobs, getStats } from '../api/jobs.api';
 import JobCard from '../components/JobCard';
+import JobCategoryFilter from '../components/JobCategoryFilter';
 import HomeHero from '../components/HomeHero';
 import SectionHeading from '../components/SectionHeading';
 
@@ -35,6 +36,14 @@ export default function () {
     navigate(`/jobs?search=${encodeURIComponent(search)}`);
   };
 
+  const goToCategory = (category) => {
+    if (!category) {
+      navigate('/jobs');
+      return;
+    }
+    navigate(`/jobs?category=${encodeURIComponent(category)}`);
+  };
+
   return (
     <div>
       <HomeHero
@@ -49,9 +58,17 @@ export default function () {
           <SectionHeading
             overline="Open roles"
             title="Latest jobs"
-            description="Recently added listings — search or open any role for details and resume scoring."
+            description="Recently added listings — pick a category or open any role for details and resume scoring."
             to="/jobs"
             linkLabel="See all jobs →"
+          />
+          <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted mb-3">
+            Browse by category
+          </p>
+          <JobCategoryFilter
+            value=""
+            onChange={goToCategory}
+            className="mb-8"
           />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {latestJobs.map((job) => (
