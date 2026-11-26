@@ -140,6 +140,63 @@ exports.uploadCurrent = async (req, res) => {
   }
 };
 
+function resumeContentType(mimeType, fileName) {
+  if (mimeType) return mimeType;
+  const lower = String(fileName || "").toLowerCase();
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".docx")) {
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  }
+  if (lower.endsWith(".txt")) return "text/plain";
+  return "application/octet-stream";
+}
+
+/** Stream the user's current resume (auth). Fixes view/download for Cloudinary raw URLs. */
+exports.serveCurrentFile = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        resumeUrl: true,
+        resumeFileName: true,
+        resumeMimeType: true,
+      },
+    });
+
+    if (!user?.resumeUrl) {
+      return res.status(404).json({ message: "No current resume on file" });
+    }
+
+    const buffer = await resumeStorage.fetchResumeBuffer(
+      user.resumeUrl,
+      user.resumeMimeType,
+      user.resumeFileName,
+    );
+
+    const fileName = user.resumeFileName || "resume";
+    const disposition =
+      req.query.disposition === "attachment" ? "attachment" : "inline";
+    const encodedName = encodeURIComponent(fileName);
+
+    res.setHeader(
+      "Content-Type",
+      resumeContentType(user.resumeMimeType, fileName),
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `${disposition}; filename="${encodedName}"; filename*=UTF-8''${encodedName}`,
+    );
+    res.setHeader("Content-Length", String(buffer.length));
+    res.send(buffer);
+  } catch (err) {
+    console.error(err);
+    const status = err.statusCode || 500;
+    res.status(status).json({
+      message: status === 404 ? err.message : "Could not load resume file",
+    });
+  }
+};
+
 /** Remove stored resume metadata and delete the backing file. */
 exports.deleteCurrent = async (req, res) => {
   try {

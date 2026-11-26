@@ -7,6 +7,7 @@ import { scoreResume, scoreResumeFile, scoreStoredResume } from '../../api/resum
 import ResumeScoreResult from '../ResumeScoreResult';
 import { useAuth } from '../../context/AuthContext';
 import SplitResumeLayout from '../resume/ResumeScorerLayouts';
+import ProfileCurrentResume from './ProfileCurrentResume';
 import ProfileResumeStorage from './ProfileResumeStorage';
 
 export default function ProfileResumePanel() {
@@ -119,6 +120,8 @@ export default function ProfileResumePanel() {
           one-off upload/paste for scoring only).
         </p>
       </header>
+
+      <ProfileCurrentResume />
 
       <ProfileResumeStorage />
 

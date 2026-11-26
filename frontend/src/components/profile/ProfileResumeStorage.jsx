@@ -3,8 +3,6 @@ import FileDropZone from '../FileDropZone';
 import { RESUME_FILE_ACCEPT } from '../resume/ResumeScorerFields';
 import { uploadCurrentResume, deleteCurrentResume } from '../../api/resume.api';
 import { useAuth } from '../../context/AuthContext';
-import { formatDate } from '../../utils/formatDate';
-
 export default function ProfileResumeStorage() {
   const { user, login } = useAuth();
   const [pendingFile, setPendingFile] = useState(null);
@@ -32,7 +30,7 @@ export default function ProfileResumeStorage() {
       const res = await uploadCurrentResume(pendingFile);
       syncUser(res.data.data.user);
       setPendingFile(null);
-      setMessage('Resume saved. It stays on your profile until you replace it.');
+      setMessage('Current resume updated on your profile.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save resume.');
     } finally {
@@ -49,7 +47,7 @@ export default function ProfileResumeStorage() {
       const res = await deleteCurrentResume();
       syncUser(res.data.data.user);
       setPendingFile(null);
-      setMessage('Saved resume removed.');
+      setMessage('Current resume removed.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to remove resume.');
     } finally {
@@ -58,28 +56,20 @@ export default function ProfileResumeStorage() {
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-bg-primary p-5 space-y-4">
+    <section
+      aria-labelledby="upload-resume-heading"
+      className="rounded-2xl border border-border bg-bg-primary p-5 space-y-4"
+    >
       <div>
-        <h3 className="text-sm font-semibold text-text-primary">Saved resume</h3>
+        <h3 id="upload-resume-heading" className="text-sm font-semibold text-text-primary">
+          {hasSaved ? 'Replace current resume' : 'Set current resume'}
+        </h3>
         <p className="mt-1 text-xs text-text-muted">
-          One file per account — uploading again replaces the previous file.
+          {hasSaved
+            ? 'Choosing a new file and saving updates the Current resume section above.'
+            : 'Your upload becomes the current resume for this account.'}
         </p>
       </div>
-
-      {hasSaved && (
-        <div className="rounded-xl border border-border bg-bg-card px-4 py-3 text-sm">
-          <p className="font-medium text-text-primary">{user.resumeFileName}</p>
-          {user.resumeUploadedAt && (
-            <p className="mt-1 text-xs text-text-muted">
-              Uploaded {formatDate(user.resumeUploadedAt)}
-            </p>
-          )}
-        </div>
-      )}
-
-      {!hasSaved && (
-        <p className="text-sm text-text-muted">No resume saved yet.</p>
-      )}
 
       <FileDropZone
         inputId="profile-resume-save-input"

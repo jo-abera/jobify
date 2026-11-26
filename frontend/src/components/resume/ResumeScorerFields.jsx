@@ -45,8 +45,8 @@ export function ResumeInputSection({
     return (
       <div className="rounded-xl border border-border bg-bg-card px-4 py-4 text-sm text-text-secondary">
         <p>
-          Uses the resume you saved in the section above. Replace that file there if you want to
-          score an updated version.
+          Uses your <strong className="font-medium text-text-primary">Current resume</strong>.
+          Upload a replacement above if you want to score an updated file.
         </p>
         {!hasSavedResume && (
           <p className="mt-2 text-red-300">No saved resume yet — upload one above.</p>
