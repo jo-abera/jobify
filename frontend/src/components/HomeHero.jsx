@@ -98,7 +98,10 @@ export default function HomeHero({ search, setSearch, onSubmit, stats }) {
               <Link to="/jobs" className="text-blue-text hover:underline">
                 Browse all jobs →
               </Link>
-              <Link to="/resume" className="text-text-secondary hover:text-blue-text transition-colors">
+              <Link
+                to="/profile?tab=resume"
+                className="text-text-secondary hover:text-blue-text transition-colors"
+              >
                 Score your resume
               </Link>
             </div>

@@ -3,13 +3,16 @@ import FileDropZone from '../FileDropZone';
 export const RESUME_FILE_ACCEPT =
   '.pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
 
-export function ModeToggle({ inputMode, setInputMode, onClearError }) {
+export function ModeToggle({ inputMode, setInputMode, onClearError, hasSavedResume }) {
+  const modes = [
+    ...(hasSavedResume ? [{ id: 'saved', label: 'Saved resume' }] : []),
+    { id: 'upload', label: 'Upload file' },
+    { id: 'paste', label: 'Paste text' },
+  ];
+
   return (
     <div className="flex flex-wrap gap-2">
-      {[
-        { id: 'upload', label: 'Upload file' },
-        { id: 'paste', label: 'Paste text' },
-      ].map(({ id, label }) => (
+      {modes.map(({ id, label }) => (
         <button
           key={id}
           type="button"
@@ -36,7 +39,22 @@ export function ResumeInputSection({
   setResume,
   resumeFile,
   onFileChange,
+  hasSavedResume,
 }) {
+  if (inputMode === 'saved') {
+    return (
+      <div className="rounded-xl border border-border bg-bg-card px-4 py-4 text-sm text-text-secondary">
+        <p>
+          Uses your <strong className="font-medium text-text-primary">Current resume</strong>.
+          Upload a replacement above if you want to score an updated file.
+        </p>
+        {!hasSavedResume && (
+          <p className="mt-2 text-red-300">No saved resume yet — upload one above.</p>
+        )}
+      </div>
+    );
+  }
+
   if (inputMode === 'upload') {
     return (
       <div>

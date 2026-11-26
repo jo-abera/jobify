@@ -1,5 +1,6 @@
 import FileDropZone from '../FileDropZone';
 import ResumeScoreResult from '../ResumeScoreResult';
+import SavedResumePdfPreview from '../resume/SavedResumePdfPreview';
 
 const ACCEPT =
   '.pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
@@ -34,6 +35,13 @@ export default function JobDetailResumeMatch({
           Upload your resume or paste text to see how well you match this role.
         </p>
       </div>
+
+      <SavedResumePdfPreview
+        title="Your resume"
+        compact={embedded}
+        showEmptyHint
+        className={embedded ? 'shrink-0' : ''}
+      />
 
       <div className="flex w-fit gap-1 rounded-lg border border-border bg-bg-secondary p-1">
         <button

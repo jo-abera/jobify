@@ -54,7 +54,7 @@ export default function Footer() {
                     <FooterLink to="/tracker">Application tracker</FooterLink>
                   </li>
                   <li>
-                    <FooterLink to="/resume">Resume scoring</FooterLink>
+                    <FooterLink to="/profile?tab=resume">Resume scoring</FooterLink>
                   </li>
                 </>
               )}

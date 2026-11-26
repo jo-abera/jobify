@@ -59,7 +59,7 @@ Sign in on the live site, then open **/admin** for the admin dashboard.
 - Nodemailer
 - Groq AI
 - Telegram scraping with Cheerio
-- Cloudinary image storage
+- Cloudinary (profile avatars + resume files)
 
 ## Project Structure
 
@@ -139,13 +139,21 @@ EMAIL_USERNAME=your_smtp_username
 EMAIL_PASSWORD=your_smtp_password
 EMAIL_FROM=no-reply@example.com
 
-# Optional Cloudinary
+# Cloudinary (required in production for avatars and resumes)
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
 Never commit `.env` files or real credentials to source control.
+
+### Resume file storage (Cloudinary)
+
+- Each saved resume version is uploaded as a **raw** asset under `jobify/resumes/` (public id `{versionId}.{pdf|docx|txt}`).
+- The database stores the Cloudinary `secure_url` on `User` and `ResumeVersion`; view/download/scoring always go through the API (`GET /api/resume/current/file`, version file routes) so auth stays on your backend.
+- **Production:** set all three `CLOUDINARY_*` variables. Without them, resume upload returns **503**.
+- **Local development:** if Cloudinary is unset, files are written to `backend/uploads/resumes/` and served from `/uploads/resumes` (do not rely on this in production).
+- Deleting a history entry removes the object from Cloudinary (or local disk) when that version is deleted.
 
 ### 3. Initialize Prisma
 

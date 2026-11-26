@@ -22,3 +22,104 @@ export const scoreResumeFile = (jobId, file) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
+
+/** Save or replace the user's current resume on their profile. */
+export const uploadCurrentResume = (file) => {
+  const formData = new FormData();
+  formData.append('resumeFile', file);
+  return api.post('/api/resume/current', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+export const deleteCurrentResume = () => api.delete('/api/resume/current');
+
+/** Score the saved profile resume against a job (no re-upload). */
+export const scoreStoredResume = (jobId) =>
+  api.post('/api/resume/score-stored', { jobId });
+
+/** Fetch current resume bytes (JWT). disposition: inline | attachment */
+export function fetchCurrentResumeFile(disposition = 'inline') {
+  return api.get('/api/resume/current/file', {
+    params: { disposition },
+    responseType: 'blob',
+  });
+}
+
+export function fetchResumeVersionFile(versionId, disposition = 'inline') {
+  return api.get(`/api/resume/versions/${versionId}/file`, {
+    params: { disposition },
+    responseType: 'blob',
+  });
+}
+
+export const listResumeVersions = () => api.get('/api/resume/versions');
+
+export const setResumeVersionCurrent = (versionId) =>
+  api.post(`/api/resume/versions/${versionId}/current`);
+
+/** POST alias avoids some clients/proxies dropping Authorization on DELETE. */
+export const deleteResumeVersion = (versionId) =>
+  api.post(`/api/resume/versions/${versionId}/delete`);
+
+async function openBlobInNewTab(fetchBlob) {
+  const popup = window.open('about:blank', '_blank');
+  if (!popup) {
+    const blocked = new Error(
+      'Your browser blocked the new tab. Allow pop-ups for this site and try again.'
+    );
+    blocked.code = 'POPUP_BLOCKED';
+    throw blocked;
+  }
+  popup.opener = null;
+  try {
+    popup.document.title = 'Loading resume…';
+    popup.document.body.innerHTML =
+      '<p style="font-family:system-ui,sans-serif;padding:1.5rem;color:#444">Loading resume…</p>';
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const res = await fetchBlob();
+    const type =
+      res.headers['content-type']?.split(';')[0]?.trim() || 'application/pdf';
+    const url = URL.createObjectURL(new Blob([res.data], { type }));
+    popup.location.replace(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+  } catch (err) {
+    popup.close();
+    throw err;
+  }
+}
+
+async function downloadBlob(fetchBlob, fileName) {
+  const res = await fetchBlob();
+  const type =
+    res.headers['content-type']?.split(';')[0]?.trim() || 'application/octet-stream';
+  const url = URL.createObjectURL(new Blob([res.data], { type }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName || 'resume';
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function openCurrentResume() {
+  return openBlobInNewTab(() => fetchCurrentResumeFile('inline'));
+}
+
+export async function downloadCurrentResume(fileName) {
+  return downloadBlob(() => fetchCurrentResumeFile('attachment'), fileName);
+}
+
+export async function openResumeVersion(versionId) {
+  return openBlobInNewTab(() => fetchResumeVersionFile(versionId, 'inline'));
+}
+
+export async function downloadResumeVersion(versionId, fileName) {
+  return downloadBlob(() => fetchResumeVersionFile(versionId, 'attachment'), fileName);
+}
