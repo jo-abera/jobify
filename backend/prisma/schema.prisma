@@ -55,7 +55,8 @@ model SavedJob {
   status    String    @default("saved")
   notes     String?
   savedAt   DateTime  @default(now())
-  appliedAt DateTime? // when the user applied (set when stage becomes Applied)
+  appliedAt   DateTime? // when the user applied (set when stage becomes Applied)
+  followUpAt  DateTime? // reminder to follow up with recruiter / company
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   job     Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
 

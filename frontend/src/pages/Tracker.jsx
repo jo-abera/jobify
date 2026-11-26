@@ -51,6 +51,13 @@ export default function Tracker() {
     setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated.data : s)));
   };
 
+  const handleFollowUpAtSave = async (savedId, followUpAtIso) => {
+    const updated = await updateStatus(savedId, {
+      followUpAt: followUpAtIso === null ? null : followUpAtIso,
+    });
+    setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated.data : s)));
+  };
+
   const handleDelete = async (savedId) => {
     try {
       await removeJob(savedId);
@@ -76,7 +83,7 @@ export default function Tracker() {
             className="mb-0"
             overline="Your pipeline"
             title="Application tracker"
-            description="Track stages, add notes per application, and update status as you hear back."
+            description="Track stages, notes, application and follow-up dates, and update status as you hear back."
           />
         </div>
       </section>
@@ -88,6 +95,7 @@ export default function Tracker() {
           onStatusChange={handleStatusChange}
           onNotesSave={handleNotesSave}
           onAppliedAtSave={handleAppliedAtSave}
+          onFollowUpAtSave={handleFollowUpAtSave}
           onDelete={handleDelete}
         />
       </div>

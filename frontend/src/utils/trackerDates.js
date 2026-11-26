@@ -16,3 +16,17 @@ export function dateInputToIso(dateInput) {
   if (Number.isNaN(d.getTime())) return null;
   return d.toISOString();
 }
+
+/** `overdue` | `today` | `upcoming` for reminder styling. */
+export function followUpDueState(isoString) {
+  if (!isoString) return null;
+  const due = new Date(isoString);
+  if (Number.isNaN(due.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDay = new Date(due);
+  dueDay.setHours(0, 0, 0, 0);
+  if (dueDay < today) return 'overdue';
+  if (dueDay.getTime() === today.getTime()) return 'today';
+  return 'upcoming';
+}

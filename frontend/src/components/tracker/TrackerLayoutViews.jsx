@@ -27,6 +27,7 @@ export function KanbanLayout({
   onStatusChange,
   onNotesSave,
   onAppliedAtSave,
+  onFollowUpAtSave,
   onDelete,
 }) {
   return (
@@ -62,6 +63,7 @@ export function KanbanLayout({
                     onStatusChange={onStatusChange}
                     onNotesSave={onNotesSave}
                     onAppliedAtSave={onAppliedAtSave}
+                    onFollowUpAtSave={onFollowUpAtSave}
                     onDelete={onDelete}
                   />
                 ))

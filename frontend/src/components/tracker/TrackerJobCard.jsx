@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDate } from '../../utils/formatDate';
-import { dateInputToIso, toDateInputValue } from '../../utils/trackerDates';
+import {
+  dateInputToIso,
+  followUpDueState,
+  toDateInputValue,
+} from '../../utils/trackerDates';
 import { TRACKER_STAGES, normalizeTrackerStatus } from '../../constants/trackerStages';
 
 const MAX_NOTES = 2000;
@@ -11,6 +15,7 @@ export default function TrackerJobCard({
   onStatusChange,
   onNotesSave,
   onAppliedAtSave,
+  onFollowUpAtSave,
   onDelete,
   compact = false,
 }) {
@@ -20,15 +25,21 @@ export default function TrackerJobCard({
   const [appliedDate, setAppliedDate] = useState(toDateInputValue(saved.appliedAt));
   const [savingApplied, setSavingApplied] = useState(false);
   const [appliedError, setAppliedError] = useState('');
+  const [followUpDate, setFollowUpDate] = useState(toDateInputValue(saved.followUpAt));
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
+  const [followUpError, setFollowUpError] = useState('');
 
   const stage = normalizeTrackerStatus(saved.status);
+  const followUpState = followUpDueState(saved.followUpAt);
 
   useEffect(() => {
     setNotes(saved.notes || '');
     setNotesError('');
     setAppliedDate(toDateInputValue(saved.appliedAt));
     setAppliedError('');
-  }, [saved.id, saved.notes, saved.appliedAt]);
+    setFollowUpDate(toDateInputValue(saved.followUpAt));
+    setFollowUpError('');
+  }, [saved.id, saved.notes, saved.appliedAt, saved.followUpAt]);
 
   const savedNotes = saved.notes || '';
   const notesDirty = notes !== savedNotes;
@@ -59,6 +70,21 @@ export default function TrackerJobCard({
         {saved.appliedAt && (
           <p className="text-blue-text text-xs mt-0.5 font-medium">
             Applied {formatDate(saved.appliedAt)}
+          </p>
+        )}
+        {saved.followUpAt && (
+          <p
+            className={`text-xs mt-0.5 font-medium ${
+              followUpState === 'overdue'
+                ? 'text-red-400'
+                : followUpState === 'today'
+                  ? 'text-amber-500'
+                  : 'text-text-secondary'
+            }`}
+          >
+            Follow up {formatDate(saved.followUpAt)}
+            {followUpState === 'overdue' && ' · overdue'}
+            {followUpState === 'today' && ' · today'}
           </p>
         )}
       </Link>
@@ -114,6 +140,54 @@ export default function TrackerJobCard({
             Move to Applied to set today automatically, or pick a date here.
           </p>
         )}
+      </div>
+
+      <div className="mt-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+        <label
+          htmlFor={`tracker-follow-up-${saved.id}`}
+          className="text-[0.65rem] font-bold uppercase tracking-wider text-text-muted"
+        >
+          Follow-up reminder
+        </label>
+        <div className="flex gap-2">
+          <input
+            id={`tracker-follow-up-${saved.id}`}
+            type="date"
+            value={followUpDate}
+            onChange={(e) => setFollowUpDate(e.target.value)}
+            className="min-w-0 flex-1 rounded-lg border border-border bg-bg-secondary px-2 py-1.5 text-xs text-text-primary focus:border-border-hover focus:outline-none"
+          />
+          <button
+            type="button"
+            disabled={
+              savingFollowUp ||
+              followUpDate === toDateInputValue(saved.followUpAt) ||
+              (!followUpDate && !saved.followUpAt)
+            }
+            onClick={async () => {
+              setSavingFollowUp(true);
+              setFollowUpError('');
+              try {
+                await onFollowUpAtSave(
+                  saved.id,
+                  followUpDate ? dateInputToIso(followUpDate) : null
+                );
+              } catch (err) {
+                const msg =
+                  err?.response?.data?.detail ||
+                  err?.response?.data?.message ||
+                  'Could not save reminder.';
+                setFollowUpError(msg);
+              } finally {
+                setSavingFollowUp(false);
+              }
+            }}
+            className="shrink-0 rounded-lg border border-border bg-bg-card px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-40"
+          >
+            {savingFollowUp ? '…' : 'Save'}
+          </button>
+        </div>
+        {followUpError && <p className="text-xs text-red-400">{followUpError}</p>}
       </div>
 
       <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>

@@ -12,10 +12,20 @@ const {
 } = require("../constants/trackerStages");
 const {
   readAppliedAt,
+  readDateFields,
   writeAppliedAt,
-  appliedAtMapForUser,
-  attachAppliedAt,
+  writeFollowUpAt,
+  dateFieldsMapForUser,
 } = require("../utils/trackerAppliedAt");
+
+function parseOptionalDate(value, invalidMessage) {
+  if (value === null || value === "") return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return { error: invalidMessage };
+  }
+  return { value: parsed };
+}
 
 async function respondWithSavedJob(res, savedJobId, userId) {
   const row = await prisma.savedJob.findFirst({
@@ -23,8 +33,8 @@ async function respondWithSavedJob(res, savedJobId, userId) {
     include: { job: true },
   });
   if (!row) return res.status(404).json({ message: "Not found" });
-  const appliedAt = await readAppliedAt(prisma, savedJobId, userId);
-  res.json({ ...row, appliedAt });
+  const dates = await readDateFields(prisma, savedJobId, userId);
+  res.json({ ...row, ...dates });
 }
 
 exports.getSavedJobs = async (req, res) => {
@@ -34,8 +44,16 @@ exports.getSavedJobs = async (req, res) => {
       include: { job: true },
       orderBy: { savedAt: "desc" },
     });
-    const map = await appliedAtMapForUser(prisma, req.user.id);
-    res.json(attachAppliedAt(saved, map));
+    const map = await dateFieldsMapForUser(prisma, req.user.id);
+    const withDates = saved.map((row) => {
+      const fields = map.get(row.id);
+      return {
+        ...row,
+        appliedAt: fields?.appliedAt ?? row.appliedAt ?? null,
+        followUpAt: fields?.followUpAt ?? row.followUpAt ?? null,
+      };
+    });
+    res.json(withDates);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch saved jobs" });
@@ -53,7 +71,7 @@ exports.saveJob = async (req, res) => {
       data: { userId: req.user.id, jobId },
       include: { job: true },
     });
-    res.json({ ...saved, appliedAt: null });
+    res.json({ ...saved, appliedAt: null, followUpAt: null });
   } catch (err) {
     res.status(500).json({ message: "Failed to save Job" });
   }
@@ -68,9 +86,10 @@ exports.updateStatus = async (req, res) => {
     });
     if (!saved) return res.status(404).json({ message: "Not found" });
 
-    const { status, notes, appliedAt } = req.body;
+    const { status, notes, appliedAt, followUpAt } = req.body;
     let data = {};
     let appliedAtUpdate;
+    let followUpAtUpdate;
     let nextStatus = saved.status;
 
     if (status !== undefined) {
@@ -82,15 +101,11 @@ exports.updateStatus = async (req, res) => {
     }
 
     if (appliedAt !== undefined) {
-      if (appliedAt === null || appliedAt === "") {
-        appliedAtUpdate = null;
-      } else {
-        const parsed = new Date(appliedAt);
-        if (Number.isNaN(parsed.getTime())) {
-          return res.status(400).json({ message: "Invalid application date" });
-        }
-        appliedAtUpdate = parsed;
+      const parsed = parseOptionalDate(appliedAt, "Invalid application date");
+      if (parsed.error) {
+        return res.status(400).json({ message: parsed.error });
       }
+      appliedAtUpdate = parsed.value;
     } else if (
       status !== undefined &&
       nextStatus === "applied"
@@ -105,12 +120,24 @@ exports.updateStatus = async (req, res) => {
       }
     }
 
+    if (followUpAt !== undefined) {
+      const parsed = parseOptionalDate(followUpAt, "Invalid follow-up date");
+      if (parsed.error) {
+        return res.status(400).json({ message: parsed.error });
+      }
+      followUpAtUpdate = parsed.value;
+    }
+
     if (notes !== undefined) {
       const trimmed = typeof notes === "string" ? notes.trim() : "";
       data.notes = trimmed ? trimmed.slice(0, 2000) : null;
     }
 
-    if (Object.keys(data).length === 0 && appliedAtUpdate === undefined) {
+    if (
+      Object.keys(data).length === 0 &&
+      appliedAtUpdate === undefined &&
+      followUpAtUpdate === undefined
+    ) {
       return res.status(400).json({ message: "No updates provided" });
     }
 
@@ -120,6 +147,15 @@ exports.updateStatus = async (req, res) => {
         req.params.id,
         req.user.id,
         appliedAtUpdate
+      );
+    }
+
+    if (followUpAtUpdate !== undefined) {
+      await writeFollowUpAt(
+        prisma,
+        req.params.id,
+        req.user.id,
+        followUpAtUpdate
       );
     }
 
