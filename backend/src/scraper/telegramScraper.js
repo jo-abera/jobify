@@ -1,6 +1,13 @@
 // Import the Prisma client instance (used to save jobs to the database)
 const { isWithinListingWindow } = require("../utils/jobListingWindow");
+const {
+  isPlausibleCompanyName,
+  humanizeChannelHandle,
+  extractEmployerFromText,
+  sanitizeCompanyName,
+} = require("../utils/companyProfile");
 const { saveScrapedJob } = require("./saveScrapedJob");
+const { normalizeJobLocation } = require("../utils/jobLocation");
 
 // Will hold the Telegram bot instance once created (singleton pattern)
 let bot;
@@ -52,6 +59,7 @@ function parseJobMessage(text, channelName, messageUrl) {
     .replace(/Job Title:/gi, "\nJob Title:")
     .replace(/Job Type:/gi, "\nJob Type:")
     .replace(/Work Location:/gi, "\nWork Location:")
+    .replace(/Applicants Needed:/gi, "\nApplicants Needed:")
     .replace(/Salary\/Compensation:/gi, "\nSalary/Compensation:")
     .replace(/Salary:/gi, "\nSalary:")
     .replace(/Deadline:/gi, "\nDeadline:")
@@ -147,8 +155,18 @@ function parseJobMessage(text, channelName, messageUrl) {
 
   // Apply the clean() helper to each matched field, with sensible fallback defaults
   const title = clean(titleMatch?.[1], 150);
-  const company = clean(companyMatch?.[1], 100);
-  const location = clean(locationMatch?.[1], 100) || "Addis Ababa, Ethiopia";
+  const rawCompany = clean(companyMatch?.[1], 100);
+  const channelLabel =
+    humanizeChannelHandle(channelName) || String(channelName).replace(/^@/, "");
+  const company =
+    (isPlausibleCompanyName(rawCompany)
+      ? sanitizeCompanyName(rawCompany)
+      : null) ||
+    extractEmployerFromText(text) ||
+    channelLabel;
+  const location =
+    normalizeJobLocation(clean(locationMatch?.[1], 100)) ||
+    "Addis Ababa, Ethiopia";
   const salary = clean(salaryMatch?.[1], 100) || null;
   const type = clean(typeMatch?.[1], 80) || "Full-time";
   const sourceCategory = clean(categoryMatch?.[1], 80) || null;
@@ -170,7 +188,7 @@ function parseJobMessage(text, channelName, messageUrl) {
   // Return a clean, structured job object ready to be saved to the database
   return {
     title,
-    company: company || channelName, // fall back to channel name if no company found
+    company: company || channelLabel,
     location,
     salary,
     type,

@@ -5,7 +5,12 @@
  * Parent passes savedJobIds to show already-saved state across the list.
  */
 
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  companyPathForJob,
+  jobHasCompanyPage,
+  resolveCompanyDisplayName,
+} from '../utils/companySlug';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { saveJob } from '../api/tracker.api';
@@ -61,7 +66,21 @@ export default function JobCard({ job, savedJobIds = [], onSaved }) {
           <h3 className="font-semibold text-text-primary truncate">
             {job.title}
           </h3>
-          <p className="text-text-secondary text-sm mt-0.5">{job.company}</p>
+          {job.company ? (
+            jobHasCompanyPage(job) ? (
+              <Link
+                to={companyPathForJob(job)}
+                onClick={(e) => e.stopPropagation()}
+                className="text-text-secondary text-sm mt-0.5 block truncate hover:text-blue-text hover:underline"
+              >
+                {resolveCompanyDisplayName(job)}
+              </Link>
+            ) : (
+              <span className="text-text-secondary text-sm mt-0.5 block truncate">
+                {resolveCompanyDisplayName(job)}
+              </span>
+            )
+          ) : null}
           <p className="text-text-muted text-sm mt-1">{job.location}</p>
           {job.postedAt && (
             <p className="inline-block mt-2 px-2 py-1 rounded bg-blue-light text-blue-text text-xs font-medium">

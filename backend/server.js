@@ -65,6 +65,7 @@ app.use(
 
 app.use("/api/auth", require("./src/routes/auth.routes"));
 app.use("/api/jobs", require("./src/routes/job.routes"));
+app.use("/api/companies", require("./src/routes/company.routes"));
 app.use("/api/tracker", require("./src/routes/tracker.routes"));
 app.use("/api/admin", require("./src/routes/admin.routes"));
 app.use("/api/resume", require("./src/routes/resume.routes"));
