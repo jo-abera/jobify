@@ -1,13 +1,19 @@
 /**
  * Save or update a scraped job without creating Josad-style duplicates.
+ *
+ * Category: parsers may set `sourceCategory` from the post (Category:, Department:, …).
+ * `inferJobCategory` uses that label when valid, else keyword rules on title + description,
+ * then persists `category` on Job.
  */
-
 const prisma = require("../config/db");
 const {
   normalizeJobUrl,
   pickStoredUrl,
   preferJobUrl,
 } = require("../utils/avoidDuplicateJobs");
+const { inferJobCategory } = require("../utils/jobCategoryClassifier");
+const { normalizeWorkMode } = require("../utils/jobWorkMode");
+const { normalizeExperienceLevel } = require("../utils/jobExperienceLevel");
 
 const jobFields = (parsed, postedAt) => ({
   title: parsed.title,
@@ -17,6 +23,21 @@ const jobFields = (parsed, postedAt) => ({
   type: parsed.type,
   description: parsed.description,
   source: parsed.source,
+  category: inferJobCategory({
+    title: parsed.title,
+    description: parsed.description,
+    sourceCategory: parsed.sourceCategory || parsed.category || '',
+  }),
+  workMode: normalizeWorkMode(
+    parsed.workMode,
+    parsed.location,
+    parsed.description
+  ),
+  experienceLevel: normalizeExperienceLevel(parsed.experienceLevel, {
+    title: parsed.title,
+    description: parsed.description,
+    type: parsed.type,
+  }),
   postedAt,
 });
 

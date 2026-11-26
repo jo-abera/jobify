@@ -1,30 +1,32 @@
 /**
- * Job list filter chips (All, Remote, Full-time, etc.).
- *
- * Emits filter keys consumed by Jobs.jsx (e.g. type:Full-time, loc:remote)
- * which map to query params on GET /api/jobs.
+ * Quick employment-type chips (Full-time, Internship, …) synced to ?type= in the URL.
  */
 
-const filters = [
-  { label: 'All', value: '' },
-  { label: 'Remote', value: 'remote', location: true },
-  { label: 'Full-time', value: 'Full-time', type: true },
-  { label: 'Internship', value: 'Internship', type: true },
-  { label: 'Entry Level', value: 'Entry Level', type: true },
+const typeFilters = [
+  { label: 'All types', value: '' },
+  { label: 'Full-time', value: 'Full-time' },
+  { label: 'Internship', value: 'Internship' },
+  { label: 'Part-time', value: 'Part-time' },
+  { label: 'Contract', value: 'Contract' },
 ];
 
-export default function JobFilter({ activeFilter, onFilterChange }) {
+export default function JobFilter({ activeType = '', onTypeChange, vertical = false }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {filters.map((f) => {
-        const key = f.location ? `loc:${f.value}` : f.type ? `type:${f.value}` : 'all';
-        const isActive = activeFilter === key;
+    <div
+      className={
+        vertical ? 'flex flex-col gap-2' : 'flex flex-wrap gap-2'
+      }
+    >
+      {typeFilters.map((f) => {
+        const isActive = activeType === f.value;
         return (
           <button
-            key={key}
+            key={f.label}
             type="button"
-            onClick={() => onFilterChange(f)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            onClick={() => onTypeChange(f.value)}
+            className={`px-4 py-2 text-sm font-medium transition-all ${
+              vertical ? 'w-full rounded-xl text-left' : 'rounded-full'
+            } ${
               isActive
                 ? 'bg-blue-light text-blue-text border border-blue-primary/25 shadow-sm'
                 : 'bg-bg-card border border-border text-text-secondary hover:border-blue-primary/20 hover:bg-bg-hover'

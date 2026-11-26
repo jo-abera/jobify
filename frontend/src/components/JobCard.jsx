@@ -71,10 +71,15 @@ export default function JobCard({ job, savedJobIds = [], onSaved }) {
           {job.salary && (
             <p className="text-blue-text text-sm mt-1">{job.salary}</p>
           )}
-          <div className="flex items-center gap-2 mt-3">
+          <div className="flex flex-wrap items-center gap-2 mt-3">
             <span className="text-xs px-2 py-0.5 rounded bg-bg-hover text-text-secondary">
               {job.type}
             </span>
+            {job.category && job.category !== 'Other' && (
+              <span className="text-xs px-2 py-0.5 rounded bg-blue-light text-blue-text">
+                {job.category}
+              </span>
+            )}
           </div>
         </div>
       </div>

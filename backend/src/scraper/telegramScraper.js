@@ -63,6 +63,12 @@ function parseJobMessage(text, channelName, messageUrl) {
     .replace(/Employment Type:/gi, "\nEmployment Type:")
     .replace(/Working Hours:/gi, "\nWorking Hours:")
     .replace(/Experience Level:/gi, "\nExperience Level:")
+    .replace(/Job Category:/gi, "\nJob Category:")
+    .replace(/Category:/gi, "\nCategory:")
+    .replace(/Department:/gi, "\nDepartment:")
+    .replace(/Industry:/gi, "\nIndustry:")
+    .replace(/Sector:/gi, "\nSector:")
+    .replace(/Field:/gi, "\nField:")
     .replace(/Verified Company/gi, "\nVerified Company");
 
   // ─── Title — stop at Education: or ▪️ ──────────────
@@ -111,6 +117,16 @@ function parseJobMessage(text, channelName, messageUrl) {
     normalized.match(/Job Type[:\s]+([^\n\r]+?)(?:\s+Working Hours|$)/i) ||
     normalized.match(/Employment Type[:\s]+([^\n\r]+)/i);
 
+  const categoryMatch =
+    normalized.match(/Job Category[:\s]+([^\n\r]+)/i) ||
+    normalized.match(/Category[:\s]+([^\n\r]+)/i) ||
+    normalized.match(/Department[:\s]+([^\n\r]+)/i) ||
+    normalized.match(/Industry[:\s]+([^\n\r]+)/i) ||
+    normalized.match(/Sector[:\s]+([^\n\r]+)/i) ||
+    normalized.match(/Field[:\s]+([^\n\r]+)/i);
+
+  const experienceMatch = normalized.match(/Experience Level[:\s]+([^\n\r]+)/i);
+
   // ─── URL ─────────────────────────────────────────────
   // Note: matched against the original (un-normalized) text, not "normalized"
   const urlMatch = text.match(
@@ -135,6 +151,8 @@ function parseJobMessage(text, channelName, messageUrl) {
   const location = clean(locationMatch?.[1], 100) || "Addis Ababa, Ethiopia";
   const salary = clean(salaryMatch?.[1], 100) || null;
   const type = clean(typeMatch?.[1], 80) || "Full-time";
+  const sourceCategory = clean(categoryMatch?.[1], 80) || null;
+  const experienceLevel = clean(experienceMatch?.[1], 80) || null;
   const applyLink = urlMatch?.[1]?.trim() || null;
 
   // Reject messages that aren't actually valid job posts —
@@ -156,6 +174,8 @@ function parseJobMessage(text, channelName, messageUrl) {
     location,
     salary,
     type,
+    sourceCategory,
+    experienceLevel,
     applyLink,
     messageUrl: messageUrl || null,
     description: text.trim().substring(0, 2000), // store original raw text (capped length)

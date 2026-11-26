@@ -29,8 +29,25 @@ model User {
   passwordResetToken   String?
   passwordResetExpires DateTime?
   passwordChangedAt    DateTime?
+  resumeUrl            String?
+  resumeFileName       String?
+  resumeMimeType       String?
+  resumeUploadedAt     DateTime?
   createdAt            DateTime   @default(now())
   savedJobs            SavedJob[]
+  resumeVersions       ResumeVersion[]
+}
+
+model ResumeVersion {
+  id             String   @id @default(uuid())
+  userId         String
+  resumeUrl      String
+  resumeFileName String
+  resumeMimeType String?
+  uploadedAt     DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, uploadedAt(sort: Desc)])
 }
 
 model Job {
@@ -42,9 +59,16 @@ model Job {
   url         String     @unique
   description String
   type        String     @default("Full-time")
-  source      String     @default("manual") // manual | scraper URL | company site
-  postedAt    DateTime   @default(now())
-  savedBy     SavedJob[]
+  category          String     @default("Other") // Engineering, Sales, Marketing, …
+  workMode          String     @default("On-site") // Remote | Hybrid | On-site
+  experienceLevel   String     @default("Not specified")
+  source            String     @default("manual") // manual | scraper URL | company site
+  postedAt          DateTime   @default(now())
+  savedBy           SavedJob[]
+
+  @@index([category])
+  @@index([workMode])
+  @@index([experienceLevel])
 }
 
 // User bookmark + application pipeline status (kanban).

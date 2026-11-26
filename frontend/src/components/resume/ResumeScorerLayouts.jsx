@@ -9,6 +9,9 @@ import {
 export default function SplitResumeLayout({ onSubmit, ...fieldProps }) {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
+      <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+        Score against a job
+      </p>
       <ModeToggle {...fieldProps} />
       <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
         <div className="rounded-2xl border border-border bg-bg-primary p-5">

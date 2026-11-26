@@ -12,6 +12,8 @@ const bcrypt = require("bcrypt");
 const prisma = require("../config/db");
 const Email = require("../utils/email");
 const cloudinary = require("../utils/cloudinary");
+const { PublicUserSelect } = require("../utils/publicUser");
+const resumeStorage = require("../utils/resumeStorage");
 const { validatePassword } = require("../utils/passwordValidation");
 
 //const { OAuth2Client } = require("google-auth-library");
@@ -20,25 +22,6 @@ const { validatePassword } = require("../utils/passwordValidation");
 const GOOGLE_PLACEHOLDER_PASSWORD = "GOOGLE_OAUTH_NO_PASSWORD";
 const JOB_TYPES = ["Full-time", "Part-time", "Internship", "Contract"];
 const WORK_MODES = ["Remote", "On-site", "Hybrid"];
-
-/** Safe user fields retured to the client (never include secrets) */
-const PublicUserSelect = {
-  id: true,
-  name: true,
-  email: true,
-  role: true,
-  avatar: true,
-  location: true,
-  phone: true,
-  bio: true,
-  skills: true,
-  preferredJobTypes: true,
-  preferredWorkModes: true,
-  salaryExpectationMin: true,
-  salaryExpectationMax: true,
-  isVerified: true,
-  createdAt: true,
-};
 
 /**
  * Signs JWT and responds with token + public user profile.
@@ -69,6 +52,10 @@ const signAndSend = (user, statusCode, res) => {
     salaryExpectationMax: user.salaryExpectationMax,
     isVerified: user.isVerified,
     createdAt: user.createdAt,
+    resumeUrl: user.resumeUrl,
+    resumeFileName: user.resumeFileName,
+    resumeMimeType: user.resumeMimeType,
+    resumeUploadedAt: user.resumeUploadedAt,
   };
 
   res.status(statusCode).json({
@@ -611,6 +598,21 @@ exports.uploadAvatar = async (req, res) => {
 
 exports.deleteAccount = async (req, res) => {
   try {
+    const versions = await prisma.resumeVersion.findMany({
+      where: { userId: req.user.id },
+      select: { id: true, resumeUrl: true },
+    });
+    for (const version of versions) {
+      await resumeStorage.removeResumeFileByKey(version.id, version.resumeUrl);
+    }
+    await prisma.resumeVersion.deleteMany({ where: { userId: req.user.id } });
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { resumeUrl: true },
+    });
+    if (user?.resumeUrl && versions.length === 0) {
+      await resumeStorage.removeResumeFile(req.user.id, user.resumeUrl);
+    }
     await prisma.savedJob.deleteMany({ where: { userId: req.user.id } });
     await prisma.user.delete({ where: { id: req.user.id } });
     res
