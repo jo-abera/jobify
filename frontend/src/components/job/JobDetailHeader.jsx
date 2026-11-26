@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { applyWithResume } from '../../api/resume.api';
 import {
   companyPathForJob,
   jobHasCompanyPage,
   resolveCompanyDisplayName,
 } from '../../utils/companySlug';
+import { isResumeSectionComplete } from '../../utils/profileCompletion';
 
 export default function JobDetailHeader({
   job,
@@ -13,7 +16,22 @@ export default function JobDetailHeader({
   onSave,
   compact = false,
 }) {
+  const [applying, setApplying] = useState(false);
+  const [applyError, setApplyError] = useState('');
+  const hasResume = Boolean(user && isResumeSectionComplete(user));
   const initial = (job.company?.charAt(0) || '?').toUpperCase();
+
+  const handleApplyWithResume = async () => {
+    setApplyError('');
+    setApplying(true);
+    try {
+      await applyWithResume(job.url, user.resumeFileName);
+    } catch (err) {
+      setApplyError(err.message || 'Could not download your resume. Try again.');
+    } finally {
+      setApplying(false);
+    }
+  };
 
   return (
     <div className={compact ? '' : 'bg-bg-card border border-border rounded-card p-6'}>
@@ -62,11 +80,25 @@ export default function JobDetailHeader({
       </div>
 
       <div className={`flex flex-wrap gap-3 ${compact ? 'mt-4' : 'mt-6'}`}>
+        {hasResume ? (
+          <button
+            type="button"
+            onClick={handleApplyWithResume}
+            disabled={applying}
+            className="btn-brand rounded-xl px-5 py-2.5 font-semibold text-white transition-colors disabled:opacity-60"
+          >
+            {applying ? 'Preparing…' : 'Apply with Resume'}
+          </button>
+        ) : null}
         <a
           href={job.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-brand rounded-xl px-5 py-2.5 font-semibold text-white transition-colors"
+          className={`rounded-xl px-5 py-2.5 font-semibold transition-colors ${
+            hasResume
+              ? 'border border-border bg-bg-card text-text-primary hover:bg-bg-hover'
+              : 'btn-brand text-white'
+          }`}
         >
           Apply on company site
         </a>
@@ -85,9 +117,13 @@ export default function JobDetailHeader({
           </button>
         )}
       </div>
+      {applyError ? (
+        <p className="mt-2 text-xs text-red-400">{applyError}</p>
+      ) : null}
       <p className="mt-2 text-xs text-text-muted">
-        Opens the employer&apos;s careers page in a new tab — applications are submitted on
-        their website.
+        {hasResume
+          ? 'Apply with Resume opens the listing and downloads your saved file so you can attach it on the employer site.'
+          : "Opens the employer's careers page in a new tab — applications are submitted on their website."}
       </p>
     </div>
   );

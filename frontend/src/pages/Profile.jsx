@@ -293,7 +293,7 @@ export default function Profile() {
       </section>
 
       <div className="mx-auto max-w-4xl px-4 py-8">
-      {user ? (
+      {user && activeTab === 'career' ? (
         <ProfileCompletionIndicator user={user} onGoToSection={handleGoToSection} />
       ) : null}
       <ProfileLayoutFrame activeTab={activeTab} setActiveTab={handleTabChange}>
