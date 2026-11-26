@@ -52,9 +52,10 @@ model SavedJob {
   id      String   @id @default(uuid())
   userId  String
   jobId   String
-  status  String   @default("saved")
-  notes   String?
-  savedAt DateTime @default(now())
+  status    String    @default("saved")
+  notes     String?
+  savedAt   DateTime  @default(now())
+  appliedAt DateTime? // when the user applied (set when stage becomes Applied)
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   job     Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
 

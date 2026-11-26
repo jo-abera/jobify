@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDate } from '../../utils/formatDate';
+import { dateInputToIso, toDateInputValue } from '../../utils/trackerDates';
 import { TRACKER_STAGES, normalizeTrackerStatus } from '../../constants/trackerStages';
 
 const MAX_NOTES = 2000;
@@ -9,17 +10,25 @@ export default function TrackerJobCard({
   saved,
   onStatusChange,
   onNotesSave,
+  onAppliedAtSave,
   onDelete,
   compact = false,
 }) {
   const [notes, setNotes] = useState(saved.notes || '');
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesError, setNotesError] = useState('');
+  const [appliedDate, setAppliedDate] = useState(toDateInputValue(saved.appliedAt));
+  const [savingApplied, setSavingApplied] = useState(false);
+  const [appliedError, setAppliedError] = useState('');
+
+  const stage = normalizeTrackerStatus(saved.status);
 
   useEffect(() => {
     setNotes(saved.notes || '');
     setNotesError('');
-  }, [saved.id, saved.notes]);
+    setAppliedDate(toDateInputValue(saved.appliedAt));
+    setAppliedError('');
+  }, [saved.id, saved.notes, saved.appliedAt]);
 
   const savedNotes = saved.notes || '';
   const notesDirty = notes !== savedNotes;
@@ -47,7 +56,65 @@ export default function TrackerJobCard({
         <h3 className="font-medium text-text-primary text-sm truncate">{saved.job.title}</h3>
         <p className="text-text-secondary text-xs mt-0.5">{saved.job.company}</p>
         <p className="text-text-muted text-xs mt-1">Saved {formatDate(saved.savedAt)}</p>
+        {saved.appliedAt && (
+          <p className="text-blue-text text-xs mt-0.5 font-medium">
+            Applied {formatDate(saved.appliedAt)}
+          </p>
+        )}
       </Link>
+
+      <div className="mt-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+          <label
+            htmlFor={`tracker-applied-${saved.id}`}
+            className="text-[0.65rem] font-bold uppercase tracking-wider text-text-muted"
+          >
+            Application date
+          </label>
+          <div className="flex gap-2">
+            <input
+              id={`tracker-applied-${saved.id}`}
+              type="date"
+              value={appliedDate}
+              onChange={(e) => setAppliedDate(e.target.value)}
+              className="min-w-0 flex-1 rounded-lg border border-border bg-bg-secondary px-2 py-1.5 text-xs text-text-primary focus:border-border-hover focus:outline-none"
+            />
+            <button
+              type="button"
+              disabled={
+                savingApplied ||
+                appliedDate === toDateInputValue(saved.appliedAt) ||
+                (!appliedDate && !saved.appliedAt)
+              }
+              onClick={async () => {
+                setSavingApplied(true);
+                setAppliedError('');
+                try {
+                  await onAppliedAtSave(
+                    saved.id,
+                    appliedDate ? dateInputToIso(appliedDate) : null
+                  );
+                } catch (err) {
+                  const msg =
+                    err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
+                    'Could not save date.';
+                  setAppliedError(msg);
+                } finally {
+                  setSavingApplied(false);
+                }
+              }}
+              className="shrink-0 rounded-lg border border-border bg-bg-card px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:bg-bg-hover disabled:opacity-40"
+            >
+              {savingApplied ? '…' : 'Save'}
+            </button>
+          </div>
+          {appliedError && <p className="text-xs text-red-400">{appliedError}</p>}
+        {stage === 'saved' && !saved.appliedAt && (
+          <p className="text-[0.65rem] text-text-muted">
+            Move to Applied to set today automatically, or pick a date here.
+          </p>
+        )}
+      </div>
 
       <div className="mt-3 space-y-2" onClick={(e) => e.stopPropagation()}>
         <label

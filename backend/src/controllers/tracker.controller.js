@@ -10,6 +10,22 @@ const {
   normalizeTrackerStatus,
   isValidTrackerStatus,
 } = require("../constants/trackerStages");
+const {
+  readAppliedAt,
+  writeAppliedAt,
+  appliedAtMapForUser,
+  attachAppliedAt,
+} = require("../utils/trackerAppliedAt");
+
+async function respondWithSavedJob(res, savedJobId, userId) {
+  const row = await prisma.savedJob.findFirst({
+    where: { id: savedJobId, userId },
+    include: { job: true },
+  });
+  if (!row) return res.status(404).json({ message: "Not found" });
+  const appliedAt = await readAppliedAt(prisma, savedJobId, userId);
+  res.json({ ...row, appliedAt });
+}
 
 exports.getSavedJobs = async (req, res) => {
   try {
@@ -18,8 +34,10 @@ exports.getSavedJobs = async (req, res) => {
       include: { job: true },
       orderBy: { savedAt: "desc" },
     });
-    res.json(saved);
+    const map = await appliedAtMapForUser(prisma, req.user.id);
+    res.json(attachAppliedAt(saved, map));
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Failed to fetch saved jobs" });
   }
 };
@@ -35,7 +53,7 @@ exports.saveJob = async (req, res) => {
       data: { userId: req.user.id, jobId },
       include: { job: true },
     });
-    res.json(saved);
+    res.json({ ...saved, appliedAt: null });
   } catch (err) {
     res.status(500).json({ message: "Failed to save Job" });
   }
@@ -49,27 +67,78 @@ exports.updateStatus = async (req, res) => {
       where: { id: req.params.id, userId: req.user.id },
     });
     if (!saved) return res.status(404).json({ message: "Not found" });
-    const { status, notes } = req.body;
+
+    const { status, notes, appliedAt } = req.body;
     let data = {};
+    let appliedAtUpdate;
+    let nextStatus = saved.status;
+
     if (status !== undefined) {
       if (!isValidTrackerStatus(status)) {
         return res.status(400).json({ message: "Invalid tracker stage" });
       }
-      data.status = normalizeTrackerStatus(status);
+      nextStatus = normalizeTrackerStatus(status);
+      data.status = nextStatus;
     }
+
+    if (appliedAt !== undefined) {
+      if (appliedAt === null || appliedAt === "") {
+        appliedAtUpdate = null;
+      } else {
+        const parsed = new Date(appliedAt);
+        if (Number.isNaN(parsed.getTime())) {
+          return res.status(400).json({ message: "Invalid application date" });
+        }
+        appliedAtUpdate = parsed;
+      }
+    } else if (
+      status !== undefined &&
+      nextStatus === "applied"
+    ) {
+      const currentAppliedAt = await readAppliedAt(
+        prisma,
+        req.params.id,
+        req.user.id
+      );
+      if (!currentAppliedAt) {
+        appliedAtUpdate = new Date();
+      }
+    }
+
     if (notes !== undefined) {
       const trimmed = typeof notes === "string" ? notes.trim() : "";
       data.notes = trimmed ? trimmed.slice(0, 2000) : null;
     }
 
-    const updated = await prisma.savedJob.update({
-      where: { id: req.params.id },
-      data,
-      include: { job: true },
-    });
-    res.json(updated);
+    if (Object.keys(data).length === 0 && appliedAtUpdate === undefined) {
+      return res.status(400).json({ message: "No updates provided" });
+    }
+
+    if (appliedAtUpdate !== undefined) {
+      await writeAppliedAt(
+        prisma,
+        req.params.id,
+        req.user.id,
+        appliedAtUpdate
+      );
+    }
+
+    if (Object.keys(data).length > 0) {
+      await prisma.savedJob.update({
+        where: { id: req.params.id },
+        data,
+      });
+    }
+
+    return respondWithSavedJob(res, req.params.id, req.user.id);
   } catch (err) {
-    res.status(500).json({ message: "Failed to update status" });
+    console.error(err);
+    const detail =
+      process.env.NODE_ENV === "development" ? err.message : undefined;
+    res.status(500).json({
+      message: "Failed to update application",
+      ...(detail && { detail }),
+    });
   }
 };
 

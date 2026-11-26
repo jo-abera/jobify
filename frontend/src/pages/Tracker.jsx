@@ -44,6 +44,13 @@ export default function Tracker() {
     setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated.data : s)));
   };
 
+  const handleAppliedAtSave = async (savedId, appliedAtIso) => {
+    const updated = await updateStatus(savedId, {
+      appliedAt: appliedAtIso === null ? null : appliedAtIso,
+    });
+    setSavedJobs((prev) => prev.map((s) => (s.id === savedId ? updated.data : s)));
+  };
+
   const handleDelete = async (savedId) => {
     try {
       await removeJob(savedId);
@@ -80,6 +87,7 @@ export default function Tracker() {
           getColumnJobs={getColumnJobs}
           onStatusChange={handleStatusChange}
           onNotesSave={handleNotesSave}
+          onAppliedAtSave={handleAppliedAtSave}
           onDelete={handleDelete}
         />
       </div>
