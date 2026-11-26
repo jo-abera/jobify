@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import JobCard from '../components/JobCard';
 import SectionHeading from '../components/SectionHeading';
 import EmptyState from '../components/EmptyState';
+import JobCardSkeletonGrid from '../components/skeletons/JobCardSkeleton';
 
 function formatWebsite(url) {
   if (!url) return null;
@@ -50,7 +51,9 @@ export default function CompanyPage() {
 
   if (loading) {
     return (
-      <p className="text-text-muted text-center py-16">Loading company…</p>
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <JobCardSkeletonGrid count={3} />
+      </div>
     );
   }
 

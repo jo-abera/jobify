@@ -19,6 +19,7 @@ import JobFiltersPanel from '../components/JobFiltersPanel';
 import SectionHeading from '../components/SectionHeading';
 import RecentlyViewedJobs from '../components/RecentlyViewedJobs';
 import EmptyState from '../components/EmptyState';
+import JobCardSkeletonGrid from '../components/skeletons/JobCardSkeleton';
 import JobPagination from '../components/JobPagination';
 import {
   apiParamsFromSearchParams,
@@ -515,7 +516,7 @@ export default function Jobs() {
       )}
 
       {loading ? (
-        <p className="text-text-muted text-center py-12">Loading jobs...</p>
+        <JobCardSkeletonGrid count={6} />
       ) : jobsToRender.length === 0 ? (
         <EmptyState
           icon="🔍"

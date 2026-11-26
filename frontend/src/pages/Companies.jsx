@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { listCompanies } from '../api/companies.api';
 import SectionHeading from '../components/SectionHeading';
 import EmptyState from '../components/EmptyState';
+import CompanyCardSkeletonGrid from '../components/skeletons/CompanyCardSkeleton';
 
 function formatWebsite(url) {
   if (!url) return null;
@@ -40,7 +41,7 @@ export default function Companies() {
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         {loading ? (
-          <p className="text-center text-text-muted py-12">Loading companies…</p>
+          <CompanyCardSkeletonGrid count={6} />
         ) : companies.length === 0 ? (
           <EmptyState
             icon="🏢"

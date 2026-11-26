@@ -13,6 +13,7 @@ import HomeHero from '../components/HomeHero';
 import SectionHeading from '../components/SectionHeading';
 import RecentlyViewedJobs from '../components/RecentlyViewedJobs';
 import EmptyState from '../components/EmptyState';
+import JobCardSkeletonGrid from '../components/skeletons/JobCardSkeleton';
 
 export default function () {
   const [search, setSearch] = useState('');
@@ -24,12 +25,15 @@ export default function () {
   });
   const [categoryCounts, setCategoryCounts] = useState(null);
   const [categoryTotal, setCategoryTotal] = useState(null);
+  const [loadingLatest, setLoadingLatest] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
+    setLoadingLatest(true);
     getJobs()
       .then((res) => setLatestJobs(res.data.jobs.slice(0, 15)))
-      .catch(() => {});
+      .catch(() => setLatestJobs([]))
+      .finally(() => setLoadingLatest(false));
     getStats()
       .then((res) => setStats(res.data))
       .catch(() => {});
@@ -88,13 +92,17 @@ export default function () {
             countsByCategory={categoryCounts}
             totalCount={categoryTotal}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {latestJobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
+          {loadingLatest ? (
+            <JobCardSkeletonGrid count={6} />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {latestJobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+          )}
 
-          {latestJobs.length === 0 && (
+          {!loadingLatest && latestJobs.length === 0 && (
             <EmptyState
               icon="📋"
               title="No jobs listed yet"
