@@ -2,7 +2,7 @@
  * Route guard for authenticated pages.
  *
  * Waits for AuthContext loading to finish, then redirects guests to /login.
- * Used in App.jsx for /tracker and /resume.
+ * Used in App.jsx for /tracker, /profile, and /resume (redirects to profile).
  */
 
 import { Navigate } from 'react-router-dom'

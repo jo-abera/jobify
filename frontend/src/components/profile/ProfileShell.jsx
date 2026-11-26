@@ -1,5 +1,8 @@
+export const PROFILE_TAB_IDS = ['career', 'resume', 'preferences', 'security'];
+
 const TABS = [
   { id: 'career', label: 'Career Profile' },
+  { id: 'resume', label: 'Resume' },
   { id: 'preferences', label: 'Job Preferences' },
   { id: 'security', label: 'Account Security' },
 ];

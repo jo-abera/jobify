@@ -1,14 +1,15 @@
 /**
  * Profile and settings page.
  *
- * Three-tab layout:
+ * Tab layout:
  * 1) Career Profile (identity/contact/skills/avatar)
- * 2) Job Preferences (types, work modes, salary range)
- * 3) Account Security (change password + delete account)
+ * 2) Resume (AI matching against tracker jobs)
+ * 3) Job Preferences (types, work modes, salary range)
+ * 4) Account Security (change password + delete account)
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   updatePassword,
   updatePreferences,
@@ -19,8 +20,9 @@ import {
 import { useAuth } from '../context/AuthContext'
 import PasswordInput from '../components/PasswordInput'
 import SectionHeading from '../components/SectionHeading'
-import { ProfileLayoutFrame } from '../components/profile/ProfileShell'
+import { ProfileLayoutFrame, PROFILE_TAB_IDS } from '../components/profile/ProfileShell'
 import ProfileAvatarField from '../components/profile/ProfileAvatarField'
+import ProfileResumePanel from '../components/profile/ProfileResumePanel'
 
 const JOB_TYPES = ['Full-time', 'Part-time', 'Internship', 'Contract']
 const WORK_MODES = ['Remote', 'On-site', 'Hybrid']
@@ -33,7 +35,10 @@ function toStringArray(value) {
 export default function Profile() {
   const { user, login, logout } = useAuth()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('career')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabFromUrl = searchParams.get('tab')
+  const initialTab = PROFILE_TAB_IDS.includes(tabFromUrl) ? tabFromUrl : 'career'
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -62,6 +67,22 @@ export default function Profile() {
     password: '',
     passwordConfirm: ''
   })
+
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    if (t && PROFILE_TAB_IDS.includes(t)) {
+      setActiveTab(t)
+    }
+  }, [searchParams])
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    if (tab === 'career') {
+      setSearchParams({}, { replace: true })
+    } else {
+      setSearchParams({ tab }, { replace: true })
+    }
+  }
 
   useEffect(() => {
     if (!user) return
@@ -239,13 +260,13 @@ export default function Profile() {
             className="mb-0"
             overline="Your account"
             title="Profile & settings"
-            description="Manage your career profile, job preferences, and account security."
+            description="Career details, resume matching, job preferences, and account security."
           />
         </div>
       </section>
 
       <div className="mx-auto max-w-4xl px-4 py-8">
-      <ProfileLayoutFrame activeTab={activeTab} setActiveTab={setActiveTab}>
+      <ProfileLayoutFrame activeTab={activeTab} setActiveTab={handleTabChange}>
       {message && <p className="mb-4 text-sm text-green-600 dark:text-green-400">{message}</p>}
       {error && <p className="mb-4 text-sm text-red-300">{error}</p>}
 
@@ -357,6 +378,12 @@ export default function Profile() {
             Save profile
           </button>
         </form>
+      )}
+
+      {activeTab === 'resume' && (
+        <section className="rounded-card border border-border bg-bg-card p-6">
+          <ProfileResumePanel />
+        </section>
       )}
 
       {activeTab === 'preferences' && (
