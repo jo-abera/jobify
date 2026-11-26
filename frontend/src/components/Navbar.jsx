@@ -7,9 +7,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import { NavbarNav } from './nav/NavbarNav'
+import { getProfileWarnings } from '../utils/profileCompletion'
 
 function UserMenu({ user, pathname, menuRef, menuOpen, setMenuOpen, onLogout }) {
   const navActive = (to) => pathname === to || pathname.startsWith(`${to}/`)
+  const warnings = getProfileWarnings(user)
 
   const getInitials = (name) => {
     if (!name) return 'U'
@@ -26,8 +28,17 @@ function UserMenu({ user, pathname, menuRef, menuOpen, setMenuOpen, onLogout }) 
       <button
         type="button"
         onClick={() => setMenuOpen((prev) => !prev)}
-        className="flex items-center gap-2 text-text-secondary hover:text-text-primary"
+        className="relative flex items-center gap-2 text-text-secondary hover:text-text-primary"
+        aria-label={
+          warnings.length ? 'Account menu — profile action needed' : 'Account menu'
+        }
       >
+        {warnings.length > 0 ? (
+          <span
+            className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-bg-secondary bg-amber-500"
+            title="Complete your profile"
+          />
+        ) : null}
         {user.avatar ? (
           <img
             src={user.avatar}
@@ -42,11 +53,40 @@ function UserMenu({ user, pathname, menuRef, menuOpen, setMenuOpen, onLogout }) 
       </button>
 
       {menuOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-52 rounded-lg border border-border bg-bg-card p-2 shadow-lg">
+        <div className="absolute right-0 z-50 mt-2 w-64 rounded-lg border border-border bg-bg-card p-2 shadow-lg">
           <div className="border-b border-border px-3 py-2">
             <p className="truncate text-sm font-medium text-text-primary">{user.name}</p>
             <p className="truncate text-xs text-text-muted">{user.email}</p>
           </div>
+          {warnings.length > 0 ? (
+            <div className="space-y-2 border-b border-border px-2 py-2">
+              <p className="px-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-text-muted">
+                Action needed
+              </p>
+              {warnings.map((w) => (
+                <Link
+                  key={w.id}
+                  to={w.to}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex gap-2.5 rounded-lg border border-amber-500/40 bg-amber-500/[0.14] px-2.5 py-2.5 text-xs transition-colors hover:bg-amber-500/20"
+                >
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/30 text-sm font-bold leading-none text-text-primary"
+                    aria-hidden
+                  >
+                    !
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <p className="font-semibold text-text-primary">{w.message}</p>
+                    <p className="mt-0.5 leading-snug text-text-secondary">{w.detail}</p>
+                    <span className="mt-1.5 inline-block font-medium text-blue-text">
+                      {w.cta} →
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ) : null}
           <Link
             to="/profile"
             onClick={() => setMenuOpen(false)}

@@ -111,6 +111,16 @@ async function openBlobInNewTab(fetchBlob) {
   }
 }
 
+function openExternalUrl(url) {
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.target = '_blank';
+  anchor.rel = 'noopener noreferrer';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
 async function downloadBlob(fetchBlob, fileName) {
   const res = await fetchBlob();
   const type =
@@ -132,6 +142,18 @@ export async function openCurrentResume() {
 
 export async function downloadCurrentResume(fileName) {
   return downloadBlob(() => fetchCurrentResumeFile('attachment'), fileName);
+}
+
+/**
+ * Opens the employer apply URL and downloads the saved resume (same user gesture).
+ */
+export async function applyWithResume(jobUrl, resumeFileName) {
+  if (!jobUrl) {
+    throw new Error('This job has no apply link.');
+  }
+  // Same pattern as a normal link — avoids pop-up blockers that block window.open.
+  openExternalUrl(jobUrl);
+  await downloadCurrentResume(resumeFileName);
 }
 
 export async function openResumeVersion(versionId) {

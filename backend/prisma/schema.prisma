@@ -20,6 +20,9 @@ model User {
   location             String?
   phone                String?
   bio                  String?
+  githubUrl            String?
+  linkedinUrl          String?
+  portfolioUrl         String?
   skills               Json       @default("[]")
   preferredJobTypes    Json       @default("[]")
   preferredWorkModes   Json       @default("[]")
