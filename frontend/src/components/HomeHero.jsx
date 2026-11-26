@@ -60,7 +60,7 @@ export default function HomeHero({ search, setSearch, onSubmit, stats }) {
 
       <div className="relative max-w-6xl mx-auto px-4 pt-12 pb-12 md:pt-16 md:pb-16">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="text-center lg:text-left order-2 lg:order-1">
+          <div className="text-center lg:text-left">
             <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-[0.2em] bg-blue-light text-blue-text mb-5">
               Jobs · Tracker · AI resume
             </p>
@@ -116,7 +116,7 @@ export default function HomeHero({ search, setSearch, onSubmit, stats }) {
             </dl>
           </div>
 
-          <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
+          <div className="order-1 hidden lg:order-2 lg:flex lg:justify-end">
             <HeroProductMock />
           </div>
         </div>
