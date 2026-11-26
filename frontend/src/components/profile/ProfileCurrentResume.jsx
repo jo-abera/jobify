@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { formatDate } from '../../utils/formatDate';
 import { downloadCurrentResume, openCurrentResume } from '../../api/resume.api';
+import SavedResumePdfPreview from '../resume/SavedResumePdfPreview';
 
 function ResumeDocIcon({ className = 'h-10 w-10' }) {
   return (
@@ -146,6 +147,13 @@ export default function ProfileCurrentResume() {
         </div>
       )}
 
+      {hasCurrent && (
+        <SavedResumePdfPreview
+          title="PDF preview"
+          className="mt-6"
+          showEmptyHint={false}
+        />
+      )}
     </section>
   );
 }

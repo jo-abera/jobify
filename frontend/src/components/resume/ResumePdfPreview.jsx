@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { isResumePdf } from '../../utils/resumePreview';
 
 /**
@@ -10,10 +11,16 @@ export default function ResumePdfPreview({
   loadBlob = null,
   refreshKey = '',
   className = '',
+  compact = false,
+  allowExpand = true,
+  onOpenInNewTab = null,
 }) {
+  const frameHeight = compact ? 'h-80' : 'h-[28rem]';
+  const minHeight = compact ? '20rem' : '28rem';
   const [src, setSrc] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const isPdf = file
     ? isResumePdf(file.name, file.type, file)
@@ -65,14 +72,60 @@ export default function ResumePdfPreview({
     };
   }, [file, loadBlob, refreshKey, isPdf]);
 
+  useEffect(() => {
+    if (!expanded) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setExpanded(false);
+    };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [expanded]);
+
+  const handleOpenInNewTab = useCallback(async () => {
+    if (onOpenInNewTab) {
+      await onOpenInNewTab();
+      return;
+    }
+    if (src) window.open(src, '_blank');
+  }, [onOpenInNewTab, src]);
+
+  const iframeSrc = src ? `${src}#toolbar=1&navpanes=0` : '';
+
   if (!isPdf) return null;
+
+  const showActions = allowExpand && src && !loading && !error;
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">{title}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">{title}</p>
+        {showActions && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="text-xs font-medium text-blue-text hover:underline"
+            >
+              Enlarge
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleOpenInNewTab()}
+              className="text-xs font-medium text-blue-text hover:underline"
+            >
+              New tab
+            </button>
+          </div>
+        )}
+      </div>
       <div
         className="overflow-hidden rounded-xl border border-border bg-bg-secondary"
-        style={{ minHeight: '28rem' }}
+        style={{ minHeight }}
       >
         {loading && (
           <p className="p-6 text-center text-sm text-text-muted">Loading preview…</p>
@@ -83,11 +136,54 @@ export default function ResumePdfPreview({
         {src && !loading && (
           <iframe
             title={title}
-            src={`${src}#toolbar=1&navpanes=0`}
-            className="h-[28rem] w-full border-0 bg-white"
+            src={iframeSrc}
+            className={`${frameHeight} w-full border-0 bg-white`}
           />
         )}
       </div>
+
+      {expanded &&
+        src &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 sm:p-8"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${title} — full size`}
+            onClick={() => setExpanded(false)}
+          >
+            <div
+              className="relative flex h-[min(92vh,56rem)] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-border bg-bg-primary shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
+                <p className="text-sm font-semibold text-text-primary">{title}</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleOpenInNewTab()}
+                    className="text-sm font-medium text-blue-text hover:underline"
+                  >
+                    Open in new tab
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(false)}
+                    className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-bg-secondary"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+              <iframe
+                title={`${title} (enlarged)`}
+                src={iframeSrc}
+                className="min-h-0 flex-1 w-full border-0 bg-white"
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
