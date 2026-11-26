@@ -1,18 +1,13 @@
 import TrackerJobCard from './TrackerJobCard';
-
-const COLUMNS = [
-  { id: 'saved', label: 'Saved' },
-  { id: 'applied', label: 'Applied' },
-  { id: 'interviewing', label: 'Interviewing' },
-  { id: 'offered', label: 'Offered' },
-];
+import { TRACKER_STAGES } from '../../constants/trackerStages';
 
 export function TrackerStatsBar({ stats }) {
   const items = [
     { label: 'Total', value: stats.total },
-    { label: 'Applied', value: stats.applied },
-    { label: 'Interviewing', value: stats.interviewing },
-    { label: 'Offered', value: stats.offered },
+    ...TRACKER_STAGES.filter((s) => s.id !== 'saved').map((stage) => ({
+      label: stage.label,
+      value: stats[stage.id] ?? 0,
+    })),
   ];
 
   return (
@@ -29,13 +24,18 @@ export function TrackerStatsBar({ stats }) {
 
 export function KanbanLayout({ getColumnJobs, onStatusChange, onDelete }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-      {COLUMNS.map((col) => {
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+      {TRACKER_STAGES.map((col) => {
         const jobs = getColumnJobs(col.id);
+        const columnClass =
+          col.id === 'rejected'
+            ? 'border-red-200/80 bg-rejected/20 dark:border-red-900/40'
+            : 'border-border bg-bg-primary';
+
         return (
           <div
             key={col.id}
-            className="flex min-h-[300px] flex-col rounded-2xl border border-border bg-bg-primary p-4"
+            className={`flex min-h-[300px] flex-col rounded-2xl border p-4 ${columnClass}`}
           >
             <div className="mb-4 flex items-center justify-between gap-2 border-b border-border pb-3">
               <h2 className="text-sm font-semibold text-text-primary">{col.label}</h2>

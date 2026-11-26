@@ -6,15 +6,27 @@ import { getChartTooltipTheme } from '../../utils/chartTheme';
 const statusColors = {
   saved: '#8b8f9a',
   applied: '#076682',
+  interview: '#d97706',
   interviewing: '#d97706',
+  offer: '#16a34a',
   offered: '#16a34a',
   rejected: '#dc2626',
 };
 
-const STATUS_ORDER = ['saved', 'applied', 'interviewing', 'offered', 'rejected'];
+const STATUS_ORDER = ['saved', 'applied', 'interview', 'offer', 'rejected'];
 
-function titleCase(status) {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+const STATUS_LABELS = {
+  saved: 'Saved',
+  applied: 'Applied',
+  interview: 'Interview',
+  interviewing: 'Interview',
+  offer: 'Offer',
+  offered: 'Offer',
+  rejected: 'Rejected',
+};
+
+function statusLabel(status) {
+  return STATUS_LABELS[status] || status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export default function ApplicationsStatusCard({ applicationsByStatus }) {
@@ -55,7 +67,7 @@ export default function ApplicationsStatusCard({ applicationsByStatus }) {
   const total = rows.reduce((sum, row) => sum + row._count.status, 0);
 
   const doughnutData = {
-    labels: rows.map((s) => titleCase(s.status)),
+    labels: rows.map((s) => statusLabel(s.status)),
     datasets: [
       {
         data: rows.map((s) => s._count.status),
@@ -94,7 +106,7 @@ export default function ApplicationsStatusCard({ applicationsByStatus }) {
                       style={{ backgroundColor: color }}
                       aria-hidden
                     />
-                    {titleCase(row.status)}
+                    {statusLabel(row.status)}
                   </span>
                   <span className="tabular-nums text-text-secondary">
                     {count}

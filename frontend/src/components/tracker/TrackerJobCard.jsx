@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { formatDate } from '../../utils/formatDate';
-
-const STATUSES = ['saved', 'applied', 'interviewing', 'offered', 'rejected'];
+import { TRACKER_STAGES, normalizeTrackerStatus } from '../../constants/trackerStages';
 
 export default function TrackerJobCard({
   saved,
@@ -24,13 +23,13 @@ export default function TrackerJobCard({
         <p className="text-text-muted text-xs mt-2 italic line-clamp-2">{saved.notes}</p>
       )}
       <select
-        value={saved.status}
+        value={normalizeTrackerStatus(saved.status)}
         onChange={(e) => onStatusChange(saved.id, e.target.value)}
         className="mt-3 w-full bg-bg-secondary border border-border rounded-lg text-xs text-text-secondary px-2 py-1.5 focus:outline-none focus:ring-0 focus:border-border-hover"
       >
-        {STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {s.charAt(0).toUpperCase() + s.slice(1)}
+        {TRACKER_STAGES.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.label}
           </option>
         ))}
       </select>

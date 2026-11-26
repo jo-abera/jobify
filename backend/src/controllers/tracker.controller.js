@@ -6,6 +6,10 @@
  */
 
 const prisma = require("../config/db");
+const {
+  normalizeTrackerStatus,
+  isValidTrackerStatus,
+} = require("../constants/trackerStages");
 
 exports.getSavedJobs = async (req, res) => {
   try {
@@ -46,9 +50,18 @@ exports.updateStatus = async (req, res) => {
     });
     if (!saved) return res.status(404).json({ message: "Not found" });
     const { status, notes } = req.body;
+    let data = {};
+    if (status !== undefined) {
+      if (!isValidTrackerStatus(status)) {
+        return res.status(400).json({ message: "Invalid tracker stage" });
+      }
+      data.status = normalizeTrackerStatus(status);
+    }
+    if (notes !== undefined) data.notes = notes;
+
     const updated = await prisma.savedJob.update({
       where: { id: req.params.id },
-      data: { status, notes },
+      data,
       include: { job: true },
     });
     res.json(updated);

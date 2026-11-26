@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { getSavedJobs, updateStatus, removeJob } from '../api/tracker.api';
 import SectionHeading from '../components/SectionHeading';
 import { TrackerStatsBar, KanbanLayout } from '../components/tracker/TrackerLayoutViews';
+import { TRACKER_STAGES, normalizeTrackerStatus } from '../constants/trackerStages';
 
 export default function Tracker() {
   const [savedJobs, setSavedJobs] = useState([]);
@@ -19,9 +20,14 @@ export default function Tracker() {
 
   const stats = {
     total: savedJobs.length,
-    applied: savedJobs.filter((s) => s.status === 'applied').length,
-    interviewing: savedJobs.filter((s) => s.status === 'interviewing').length,
-    offered: savedJobs.filter((s) => s.status === 'offered').length,
+    ...Object.fromEntries(
+      TRACKER_STAGES.map((stage) => [
+        stage.id,
+        savedJobs.filter(
+          (s) => normalizeTrackerStatus(s.status) === stage.id
+        ).length,
+      ])
+    ),
   };
 
   const handleStatusChange = async (savedId, status) => {
@@ -42,7 +48,8 @@ export default function Tracker() {
     }
   };
 
-  const getColumnJobs = (status) => savedJobs.filter((s) => s.status === status);
+  const getColumnJobs = (status) =>
+    savedJobs.filter((s) => normalizeTrackerStatus(s.status) === status);
 
   if (loading) {
     return <p className="text-text-muted text-center py-12">Loading tracker...</p>;
