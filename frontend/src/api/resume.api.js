@@ -39,11 +39,29 @@ export const scoreStoredResume = (jobId) =>
   api.post('/api/resume/score-stored', { jobId });
 
 /** Fetch current resume bytes (JWT). disposition: inline | attachment */
-export function fetchCurrentResumeFile(disposition = 'inline') {
-  return api.get('/api/resume/current/file', {
+export async function fetchCurrentResumeFile(disposition = 'inline') {
+  const res = await api.get('/api/resume/current/file', {
     params: { disposition },
     responseType: 'blob',
   });
+  const blob = res.data;
+  if (!(blob instanceof Blob) || blob.size === 0) {
+    const err = new Error('Resume file is empty or missing.');
+    err.response = { status: 502, data: { message: err.message } };
+    throw err;
+  }
+  if (blob.type?.includes('json')) {
+    try {
+      const parsed = JSON.parse(await blob.text());
+      const err = new Error(parsed?.message || 'Could not load resume file');
+      err.response = { status: res.status, data: parsed };
+      throw err;
+    } catch (e) {
+      if (e?.response) throw e;
+      throw new Error('Could not load resume file');
+    }
+  }
+  return res;
 }
 
 export function fetchResumeVersionFile(versionId, disposition = 'inline') {

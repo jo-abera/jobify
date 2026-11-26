@@ -6,7 +6,10 @@
  */
 
 const prisma = require("../config/db");
-const { isWithinListingWindow } = require("../utils/jobListingWindow");
+const {
+  isWithinListingWindow,
+  postedAtListingFilter,
+} = require("../utils/jobListingWindow");
 const {
   isValidJobCategory,
   normalizeJobCategory,
@@ -131,6 +134,36 @@ exports.getAllJobs = async (req, res) => {
         hasPrev: parseInt(page) > 1,
       },
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch jobs" });
+  }
+};
+
+/** Resolve many ids in client order; omits missing or expired jobs. */
+exports.getJobsByIds = async (req, res) => {
+  try {
+    const raw = req.query.ids;
+    const ids = String(raw || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .slice(0, 20);
+
+    if (ids.length === 0) {
+      return res.json({ jobs: [] });
+    }
+
+    const rows = await prisma.job.findMany({
+      where: {
+        id: { in: ids },
+        ...postedAtListingFilter(),
+      },
+    });
+    const byId = new Map(rows.map((job) => [job.id, job]));
+    const jobs = ids.map((id) => byId.get(id)).filter(Boolean);
+
+    res.json({ jobs });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch jobs" });

@@ -13,6 +13,7 @@ const restrictTo = require("../middleware/restrict.middleware");
 router.get("/stats", jobController.getStats);
 router.get("/filters", jobController.getFilterOptions);
 router.get("/category-counts", jobController.getCategoryCounts);
+router.get("/by-ids", jobController.getJobsByIds);
 router.get("/", jobController.getAllJobs);
 router.get("/:id", jobController.getJobById);
 

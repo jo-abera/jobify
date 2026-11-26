@@ -16,6 +16,7 @@ import JobFilter from '../components/JobFilter';
 import JobCategoryFilter from '../components/JobCategoryFilter';
 import JobFiltersPanel from '../components/JobFiltersPanel';
 import SectionHeading from '../components/SectionHeading';
+import RecentlyViewedJobs from '../components/RecentlyViewedJobs';
 import JobPagination from '../components/JobPagination';
 import {
   apiParamsFromSearchParams,
@@ -392,9 +393,19 @@ export default function Jobs() {
                 onTypeChange={(type) => handleFilterParam('type', type)}
               />
             </div>
+            <RecentlyViewedJobs
+              compact
+              className="rounded-card border border-border bg-bg-card p-4 md:p-5"
+              headingClassName="text-sm font-semibold text-text-primary"
+            />
           </aside>
 
           <div className="min-w-0">
+            <RecentlyViewedJobs
+              compact
+              className="mb-6 lg:hidden rounded-card border border-border bg-bg-card p-4"
+              headingClassName="text-sm font-semibold text-text-primary"
+            />
             <div className="mb-6 hidden lg:block">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                 <p className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-text-muted">
