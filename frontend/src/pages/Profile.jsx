@@ -23,6 +23,7 @@ import SectionHeading from '../components/SectionHeading'
 import { ProfileLayoutFrame, PROFILE_TAB_IDS } from '../components/profile/ProfileShell'
 import ProfileAvatarField from '../components/profile/ProfileAvatarField'
 import ProfileResumePanel from '../components/profile/ProfileResumePanel'
+import ProfileCompletionIndicator from '../components/profile/ProfileCompletionIndicator'
 
 const JOB_TYPES = ['Full-time', 'Part-time', 'Internship', 'Contract']
 const WORK_MODES = ['Remote', 'On-site', 'Hybrid']
@@ -50,6 +51,9 @@ export default function Profile() {
     location: '',
     phone: '',
     bio: '',
+    githubUrl: '',
+    linkedinUrl: '',
+    portfolioUrl: '',
     skills: [],
     skillInput: ''
   })
@@ -93,6 +97,9 @@ export default function Profile() {
       location: user.location || '',
       phone: user.phone || '',
       bio: user.bio || '',
+      githubUrl: user.githubUrl || '',
+      linkedinUrl: user.linkedinUrl || '',
+      portfolioUrl: user.portfolioUrl || '',
       skills: toStringArray(user.skills),
       skillInput: ''
     })
@@ -131,6 +138,9 @@ export default function Profile() {
         location: career.location,
         phone: career.phone,
         bio: career.bio,
+        githubUrl: career.githubUrl,
+        linkedinUrl: career.linkedinUrl,
+        portfolioUrl: career.portfolioUrl,
         skills: career.skills
       })
       syncAuthUser(res.data.data.user)
@@ -251,6 +261,23 @@ export default function Profile() {
     setCareer((prev) => ({ ...prev, skills: prev.skills.filter((item) => item !== skill) }))
   }
 
+  const handleGoToSection = (sectionId) => {
+    if (sectionId === 'resume') {
+      handleTabChange('resume')
+      return
+    }
+    handleTabChange('career')
+    requestAnimationFrame(() => {
+      const anchorId =
+        sectionId === 'skills'
+          ? 'profile-skills'
+          : sectionId === 'links'
+            ? 'profile-links'
+            : 'profile-basics'
+      document.getElementById(anchorId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
   return (
     <div>
       <section className="border-b border-border bg-bg-secondary/40">
@@ -266,12 +293,19 @@ export default function Profile() {
       </section>
 
       <div className="mx-auto max-w-4xl px-4 py-8">
+      {user ? (
+        <ProfileCompletionIndicator user={user} onGoToSection={handleGoToSection} />
+      ) : null}
       <ProfileLayoutFrame activeTab={activeTab} setActiveTab={handleTabChange}>
       {message && <p className="mb-4 text-sm text-green-600 dark:text-green-400">{message}</p>}
       {error && <p className="mb-4 text-sm text-red-300">{error}</p>}
 
       {activeTab === 'career' && (
-        <form onSubmit={handleCareerSave} className="bg-bg-card border border-border rounded-card p-6 space-y-4">
+        <form
+          id="profile-basics"
+          onSubmit={handleCareerSave}
+          className="bg-bg-card border border-border rounded-card p-6 space-y-4 scroll-mt-24"
+        >
           <h2 className="text-lg font-semibold text-text-primary">Career Profile</h2>
           <p className="text-text-muted text-sm">
             These details personalize your account and improve matching quality.
@@ -339,7 +373,7 @@ export default function Profile() {
             />
           </div>
 
-          <div>
+          <div id="profile-skills" className="scroll-mt-24">
             <label className="block text-sm text-text-secondary mb-1">Skills</label>
             <div className="flex gap-2">
               <input
@@ -369,6 +403,51 @@ export default function Profile() {
               ))}
             </div>
           </div>
+
+          <fieldset id="profile-links" className="scroll-mt-24 space-y-4 border-0 p-0 m-0 min-w-0">
+            <legend className="text-sm font-medium text-text-secondary">Professional links</legend>
+            <p className="text-xs text-text-muted -mt-2">
+              Add at least one — counts toward profile completion.
+            </p>
+            <div className="grid gap-4">
+              <div>
+                <label className="block text-sm text-text-secondary mb-1">GitHub</label>
+                <input
+                  type="url"
+                  value={career.githubUrl}
+                  onChange={(e) =>
+                    setCareer((prev) => ({ ...prev, githubUrl: e.target.value }))
+                  }
+                  placeholder="https://github.com/username"
+                  className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-text-secondary mb-1">LinkedIn</label>
+                <input
+                  type="url"
+                  value={career.linkedinUrl}
+                  onChange={(e) =>
+                    setCareer((prev) => ({ ...prev, linkedinUrl: e.target.value }))
+                  }
+                  placeholder="https://linkedin.com/in/username"
+                  className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-text-secondary mb-1">Portfolio</label>
+                <input
+                  type="url"
+                  value={career.portfolioUrl}
+                  onChange={(e) =>
+                    setCareer((prev) => ({ ...prev, portfolioUrl: e.target.value }))
+                  }
+                  placeholder="https://yoursite.com"
+                  className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary"
+                />
+              </div>
+            </div>
+          </fieldset>
 
           <button
             type="submit"

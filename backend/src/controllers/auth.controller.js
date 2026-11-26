@@ -13,6 +13,7 @@ const prisma = require("../config/db");
 const Email = require("../utils/email");
 const cloudinary = require("../utils/cloudinary");
 const { PublicUserSelect } = require("../utils/publicUser");
+const { normalizeProfileUrl } = require("../utils/profileUrls");
 const resumeStorage = require("../utils/resumeStorage");
 const { validatePassword } = require("../utils/passwordValidation");
 
@@ -45,6 +46,9 @@ const signAndSend = (user, statusCode, res) => {
     location: user.location,
     phone: user.phone,
     bio: user.bio,
+    githubUrl: user.githubUrl,
+    linkedinUrl: user.linkedinUrl,
+    portfolioUrl: user.portfolioUrl,
     skills: user.skills,
     preferredJobTypes: user.preferredJobTypes,
     preferredWorkModes: user.preferredWorkModes,
@@ -396,7 +400,17 @@ exports.updatePassword = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { avatar, name, location, phone, bio, skills } = req.body;
+    const {
+      avatar,
+      name,
+      location,
+      phone,
+      bio,
+      skills,
+      githubUrl,
+      linkedinUrl,
+      portfolioUrl,
+    } = req.body;
 
     let normalizedSkills = undefined;
 
@@ -434,6 +448,14 @@ exports.updateProfile = async (req, res) => {
           location !== undefined ? String(location).trim() || null : undefined,
         phone: phone !== undefined ? String(phone).trim() || null : undefined,
         bio: bio !== undefined ? String(bio).trim() || null : undefined,
+        githubUrl:
+          githubUrl !== undefined ? normalizeProfileUrl(githubUrl) : undefined,
+        linkedinUrl:
+          linkedinUrl !== undefined ? normalizeProfileUrl(linkedinUrl) : undefined,
+        portfolioUrl:
+          portfolioUrl !== undefined
+            ? normalizeProfileUrl(portfolioUrl)
+            : undefined,
         skills: normalizedSkills !== undefined ? normalizedSkills : undefined,
       },
 
@@ -441,8 +463,16 @@ exports.updateProfile = async (req, res) => {
     });
     res.status(200).json({ status: "success", data: { user: updated } });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to update profile" });
+    console.error("updateProfile:", err);
+    if (err.code === "P2022") {
+      return res.status(503).json({
+        message:
+          "Profile link fields are not in the database yet. Run backend/scripts/add-profile-links.sql, then npx prisma generate and restart the server.",
+      });
+    }
+    res.status(500).json({
+      message: err.message || "Failed to update profile",
+    });
   }
 };
 
