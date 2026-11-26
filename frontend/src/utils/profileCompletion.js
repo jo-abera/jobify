@@ -71,3 +71,28 @@ export function computeProfileCompletion(user) {
   const percent = total ? Math.round((completedCount / total) * 100) : 0;
   return { percent, completedCount, total, sections };
 }
+
+/** Actionable banners for missing resume or incomplete career profile. */
+export function getProfileWarnings(user) {
+  if (!user) return [];
+  const warnings = [];
+  if (!isResumeSectionComplete(user)) {
+    warnings.push({
+      id: 'no-resume',
+      message: 'No resume uploaded.',
+      detail: 'Upload a resume to use Apply with Resume and better match scores.',
+      to: '/profile?tab=resume',
+      cta: 'Upload resume',
+    });
+  }
+  if (!isProfileSectionComplete(user)) {
+    warnings.push({
+      id: 'profile-incomplete',
+      message: 'Profile incomplete.',
+      detail: 'Add your location and a short bio on Career Profile.',
+      to: '/profile',
+      cta: 'Complete profile',
+    });
+  }
+  return warnings;
+}
